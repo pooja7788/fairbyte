@@ -128,15 +128,15 @@ export default function Navbar({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onNavigate("orders");
+                    onNavigate("admin");
                   }}
                   className={`cursor-pointer bg-[#e4ede0] hover:bg-[#d6e4d0] text-[#2b3e21] text-[11px] font-black uppercase px-3 py-1 rounded-full tracking-wider border border-[#cfddc7] inline-flex items-center gap-1.5 transition-all shadow-2xs active:scale-95 ${
-                    currentView === "orders" || currentView === "tracking" ? "bg-[#2d4023] text-white border-[#2d4023]" : ""
+                    currentView === "admin" ? "bg-[#2d4023] text-white border-[#2d4023]" : ""
                   }`}
-                  title="View Orders & Tracking"
+                  title="Open Admin Dashboard"
                 >
-                  <Clock className="w-3.5 h-3.5 text-[#365029]" />
-                  <span>Orders</span>
+                  <ChefHat className="w-3.5 h-3.5 text-[#365029]" />
+                  <span>Admin Panel</span>
                 </button>
               </div>
             </button>
@@ -253,6 +253,19 @@ export default function Navbar({
               title="Search"
             >
               <Search className="w-4 h-4" />
+            </button>
+
+            {/* Orders Button */}
+            <button
+              onClick={() => onNavigate("orders")}
+              className={`cursor-pointer flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-bold transition-all ${
+                currentView === "orders" || currentView === "tracking"
+                  ? "bg-[#2d4023] text-white shadow-md"
+                  : "bg-white hover:bg-[#f6f2e8] border border-[#e4dcce] text-[#334230]"
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5 text-[#6c7967]" />
+              <span>Orders</span>
             </button>
 
 
