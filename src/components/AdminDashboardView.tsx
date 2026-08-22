@@ -41,6 +41,7 @@ import {
   Info
 } from "lucide-react";
 import { Order, OrderStatus, FoodItem, Restaurant } from "../types";
+import { getUberRideBookingUrl } from "../lib/uberMcp";
 
 interface AdminDashboardViewProps {
   orders: Order[];
@@ -1003,20 +1004,48 @@ export default function AdminDashboardView({
 
                           {order.status === "PREPARING" && (
                             <button
-                              onClick={() => onUpdateOrderStatus(order.id, "READY_FOR_PICKUP")}
-                              className="cursor-pointer bg-blue-500 hover:bg-blue-400 text-zinc-950 text-xs font-black px-3.5 py-2 rounded-xl transition-all"
+                              onClick={() => {
+                                onUpdateOrderStatus(order.id, "READY_FOR_PICKUP");
+                                const rest = restaurants.find(r => r.id === order.restaurantId || r.name === order.restaurantName) || {
+                                  name: order.restaurantName,
+                                  lat: 12.9716,
+                                  lng: 77.5946
+                                };
+                                const uberUrl = getUberRideBookingUrl(rest, order.address);
+                                try {
+                                  window.open(uberUrl, "_blank");
+                                } catch (e) {
+                                  console.warn("Popup blocked:", e);
+                                }
+                              }}
+                              className="cursor-pointer bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-zinc-950 text-xs font-black px-3.5 py-2 rounded-xl transition-all shadow-md flex items-center gap-1.5 active:scale-95"
+                              title="Mark order as Prepared and open Uber Ride booking with pickup & dropoff coordinates"
                             >
-                              Ready for Pickup
+                              <span>🚕 Mark Prepared & Book Uber</span>
                             </button>
                           )}
 
                           {order.status === "READY_FOR_PICKUP" && (
-                            <button
-                              onClick={() => onUpdateOrderStatus(order.id, "OUT_FOR_DELIVERY")}
-                              className="cursor-pointer bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-black px-3.5 py-2 rounded-xl transition-all"
-                            >
-                              Handover to Rider
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                              <a
+                                href={getUberRideBookingUrl(
+                                  restaurants.find(r => r.id === order.restaurantId || r.name === order.restaurantName) || { name: order.restaurantName, lat: 12.9716, lng: 77.5946 },
+                                  order.address
+                                )}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="cursor-pointer bg-black hover:bg-zinc-800 text-emerald-400 border border-zinc-700 text-xs font-black px-3 py-2 rounded-xl flex items-center gap-1 shadow-sm transition-all"
+                                title="Open Live in Uber to book driver"
+                              >
+                                <span>🚕 Uber Ride</span>
+                              </a>
+                              <button
+                                onClick={() => onUpdateOrderStatus(order.id, "OUT_FOR_DELIVERY")}
+                                className="cursor-pointer bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-black px-3.5 py-2 rounded-xl transition-all"
+                              >
+                                Handover to Rider
+                              </button>
+                            </div>
                           )}
 
                           {order.status === "OUT_FOR_DELIVERY" && (
@@ -1636,10 +1665,23 @@ export default function AdminDashboardView({
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex items-center justify-between gap-2 pt-2">
+              <a
+                href={getUberRideBookingUrl(
+                  restaurants.find(r => r.id === inspectingOrder.restaurantId || r.name === inspectingOrder.restaurantName) || { name: inspectingOrder.restaurantName, lat: 12.9716, lng: 77.5946 },
+                  inspectingOrder.address
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="cursor-pointer bg-black hover:bg-zinc-800 text-emerald-400 border border-zinc-700 text-xs font-black px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md transition-all active:scale-95"
+              >
+                <span>🚕 Book Uber Delivery Ride</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+
               <button
                 onClick={() => setInspectingOrder(null)}
-                className="cursor-pointer bg-zinc-800 text-white text-xs font-bold px-4 py-2 rounded-xl"
+                className="cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors"
               >
                 Close
               </button>

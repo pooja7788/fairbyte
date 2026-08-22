@@ -14,9 +14,11 @@ import {
   RefreshCw,
   Navigation,
   Truck,
-  Wifi
+  Wifi,
+  ExternalLink
 } from "lucide-react";
 import { Order } from "../types";
+import { getUberRideBookingUrl } from "../lib/uberMcp";
 
 interface DeliveryTrackingViewProps {
   order: Order;
@@ -375,12 +377,26 @@ export default function DeliveryTrackingView({
               </button>
             </div>
 
-            {/* Delivery Network Badge - replaces Uber deep link */}
-            <div className="w-full bg-gradient-to-r from-emerald-900/10 to-emerald-600/10 border border-emerald-200 text-emerald-800 text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 mt-1">
+            {/* Delivery Network Badge */}
+            <div className="w-full bg-gradient-to-r from-emerald-900/10 to-emerald-600/10 border border-emerald-200 text-emerald-800 text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 mt-1">
               <Truck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Delivery managed by our partner network</span>
+              <span>Autonomous delivery partner dispatch</span>
               {isLive && <Wifi className="w-3 h-3 text-emerald-500 animate-pulse" />}
             </div>
+
+            {/* Direct Open / Book Live in Uber Button for all restaurants */}
+            <a
+              href={getUberRideBookingUrl(
+                { name: order.restaurantName, lat: 12.9716, lng: 77.5946 },
+                order.address
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cursor-pointer w-full bg-black hover:bg-zinc-800 text-emerald-400 border border-zinc-700 text-xs font-black py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 text-center mt-1"
+            >
+              <span>🚕 Open Live in Uber</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
 
             {callSimulated && (
               <p className="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded-xl text-center font-bold">

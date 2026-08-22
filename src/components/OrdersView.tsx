@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { 
   Clock, 
   Bike, 
@@ -12,6 +12,7 @@ import {
   X
 } from "lucide-react";
 import { Order, CartItem, Restaurant, FoodItem } from "../types";
+import { getUberRideBookingUrl } from "../lib/uberMcp";
 
 interface OrdersViewProps {
   activeOrder: Order | null;
@@ -123,14 +124,29 @@ export default function OrdersView({
                 </span>
               </div>
 
-              <button
-                onClick={onTrackActiveOrder}
-                className="cursor-pointer bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black px-6 py-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 active:scale-95"
-              >
-                <Bike className="w-4 h-4" />
-                <span>Track Live Progress</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <a
+                  href={getUberRideBookingUrl(
+                    { name: activeOrder.restaurantName, lat: 12.9716, lng: 77.5946 },
+                    activeOrder.address
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cursor-pointer bg-black hover:bg-zinc-800 text-emerald-400 border border-zinc-700 font-bold px-4 py-3 rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-md transition-all active:scale-95"
+                  title="Open Live in Uber to book driver"
+                >
+                  <span>🚕 Uber Ride</span>
+                </a>
+
+                <button
+                  onClick={onTrackActiveOrder}
+                  className="cursor-pointer bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black px-6 py-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 active:scale-95"
+                >
+                  <Bike className="w-4 h-4" />
+                  <span>Track Live Progress</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
