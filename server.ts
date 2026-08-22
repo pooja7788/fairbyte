@@ -3,7 +3,6 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import path from "path";
 import fs from "fs";
-import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 
@@ -680,15 +679,35 @@ async function startServer() {
   const isProduction = process.env.NODE_ENV === "production" || fs.existsSync(path.join(distPath, "index.html"));
 
   if (!isProduction) {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa"
-    });
-    app.use(vite.middlewares);
+    try {
+      // Dynamic import to avoid runtime dependency on vite in production
+      const { createServer: createViteServer } = await import("vite");
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa"
+      });
+      app.use(vite.middlewares);
+    } catch (viteErr) {
+      console.warn("Vite development middleware could not be loaded, falling back to static:", viteErr);
+      app.use(express.static(distPath));
+      app.get("*", (req, res) => {
+        const indexHtml = path.join(distPath, "index.html");
+        if (fs.existsSync(indexHtml)) {
+          res.sendFile(indexHtml);
+        } else {
+          res.status(200).send("RestoX Server is running in API mode.");
+        }
+      });
+    }
   } else {
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+      const indexHtml = path.join(distPath, "index.html");
+      if (fs.existsSync(indexHtml)) {
+        res.sendFile(indexHtml);
+      } else {
+        res.status(200).send("RestoX Server is running in production.");
+      }
     });
   }
 
