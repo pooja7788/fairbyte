@@ -116,26 +116,10 @@ export default function Navbar({
                   <line x1="14" y1="1" x2="14" y2="4" />
                 </svg>
               </div>
-              <div className="flex items-center gap-2.5">
-                <button 
-                  onClick={() => onNavigate("home")}
-                  className="cursor-pointer flex items-center gap-1.5 text-left group"
-                >
-                  <span className="font-black text-2xl tracking-tight text-[#1c271b] font-sans">
-                    Resto<span className="text-[#365029]">X</span>
-                  </span>
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onNavigate("admin");
-                  }}
-                  className="cursor-pointer bg-[#e4ede0] hover:bg-[#d6e4d0] text-[#2b3e21] text-[11px] font-black uppercase px-3 py-1 rounded-full tracking-wider border border-[#cfddc7] hidden sm:inline-flex items-center gap-1.5 transition-all shadow-2xs active:scale-95"
-                  title="Open Admin Dashboard"
-                >
-                  <ChefHat className="w-3.5 h-3.5 text-[#365029]" />
-                  <span>Admin Panel</span>
-                </button>
+              <div>
+                <span className="font-black text-2xl tracking-tight text-[#1c271b] font-sans">
+                  Resto<span className="text-[#365029]">X</span>
+                </span>
               </div>
             </button>
           </div>
@@ -256,7 +240,7 @@ export default function Navbar({
             {/* Orders Button */}
             <button
               onClick={() => onNavigate("orders")}
-              className={`cursor-pointer hidden md:flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-bold transition-all ${
+              className={`cursor-pointer flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-bold transition-all ${
                 currentView === "orders" || currentView === "tracking"
                   ? "bg-[#2d4023] text-white shadow-md"
                   : "bg-white hover:bg-[#f6f2e8] border border-[#e4dcce] text-[#334230]"
@@ -264,20 +248,6 @@ export default function Navbar({
             >
               <Clock className="w-3.5 h-3.5 text-[#6c7967]" />
               <span>Orders</span>
-            </button>
-
-            {/* ADMIN / KITCHEN DASHBOARD TRIGGER */}
-            <button
-              onClick={() => onNavigate("admin")}
-              className={`cursor-pointer flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-bold transition-all border ${
-                currentView === "admin"
-                  ? "bg-[#2d4023] text-white border-[#2d4023] shadow-md shadow-[#2d4023]/25"
-                  : "bg-white hover:bg-[#f6f2e8] text-[#334230] border-[#e4dcce]"
-              }`}
-              title="Admin & Kitchen Dispatch"
-            >
-              <ChefHat className="w-3.5 h-3.5 text-[#425d33]" />
-              <span className="hidden sm:inline">Admin Panel</span>
             </button>
 
             {/* NOTIFICATIONS TRIGGER */}
