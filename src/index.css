@@ -1,14 +1,52 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Times New Roman", Times, Georgia, serif;
+  --font-serif: "Times New Roman", Times, Georgia, serif;
+  --font-mono: "Times New Roman", Times, Georgia, serif;
 }
 
-/* Base Pinterest warm body styling */
+/* Global Times New Roman typography applied consistently across the entire application */
+*,
+*::before,
+*::after {
+  font-family: "Times New Roman", Times, Georgia, serif !important;
+}
+
+html,
+body,
+button,
+input,
+textarea,
+select,
+optgroup,
+option,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+a,
+label,
+table,
+th,
+td,
+nav,
+header,
+footer,
+aside,
+main,
+section,
+div {
+  font-family: "Times New Roman", Times, Georgia, serif !important;
+}
+
+/* Base body styling */
 body {
-  font-family: var(--font-sans);
+  font-family: "Times New Roman", Times, Georgia, serif !important;
   background-color: #faf7f2;
   color: #1e261d;
   overflow-x: hidden;
@@ -34,5 +72,3 @@ body {
 .smooth-scroll {
   scroll-behavior: smooth;
 }
-
-
