@@ -11,3 +11,11 @@ services:
         value: production
       - key: NODE_VERSION
         value: 20.11.0
+      - key: SUPABASE_URL
+        value: https://mtffyaqvvuuuahctbpnl.supabase.co
+      - key: SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10ZmZ5YXF2dnV1dWFoY3RicG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MDM2NTYsImV4cCI6MjEwMjk3OTY1Nn0.AE8BEEmoskTmJ9YFDme14WgLh78xv3ascfMjaNavRiU
+      - key: VITE_SUPABASE_URL
+        value: https://mtffyaqvvuuuahctbpnl.supabase.co
+      - key: VITE_SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10ZmZ5YXF2dnV1dWFoY3RicG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MDM2NTYsImV4cCI6MjEwMjk3OTY1Nn0.AE8BEEmoskTmJ9YFDme14WgLh78xv3ascfMjaNavRiU
