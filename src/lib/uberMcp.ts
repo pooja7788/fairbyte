@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Uber Model Context Protocol (MCP) & Rides Client
  * Connected to endpoint: https://mcp.uber.com/claude/rides-3p/mcp
  */
@@ -41,7 +41,7 @@ export async function getUberMcpEstimate(
 
     return await response.json();
   } catch (err) {
-    // Graceful fallback with FairByte formula if network / third-party MCP is rate-limited
+    // Graceful fallback with RestoX formula if network / third-party MCP is rate-limited
     return {
       success: true,
       rideType: "Uber Moto / Courier",

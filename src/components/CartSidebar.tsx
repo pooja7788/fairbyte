@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { motion } from "motion/react";
 import { 
   ShoppingCart, 
@@ -68,7 +68,7 @@ export default function CartSidebar({
             </div>
             <div>
               <h3 className="font-black text-zinc-950 tracking-tight text-base font-sans">
-                Your FairByte Order
+                Your RestoX Order
               </h3>
               <p className="text-[10px] text-zinc-500 font-medium">
                 Direct restaurant pricing • Transparent delivery
@@ -238,11 +238,11 @@ export default function CartSidebar({
                       </div>
                     </div>
 
-                    {/* FairByte Side */}
+                    {/* RestoX Side */}
                     <div className="bg-emerald-900/40 border border-emerald-500/40 rounded-2xl p-3.5 space-y-2 relative overflow-hidden">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-black text-emerald-300 uppercase tracking-wider">
-                          FairByte
+                          RestoX
                         </span>
                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                       </div>
@@ -289,7 +289,7 @@ export default function CartSidebar({
               {/* ------------------------------------------------------------- */}
               <div className="space-y-2.5 pt-2">
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400 block">
-                  How FairByte Pricing Works
+                  How RestoX Pricing Works
                 </span>
 
                 <div className="grid grid-cols-1 gap-2.5">

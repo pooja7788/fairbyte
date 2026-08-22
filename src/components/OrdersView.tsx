@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { 
   Clock, 
   Bike, 
@@ -269,7 +269,7 @@ export default function OrdersView({
 
             {selectedReceiptOrder.billing.traditionalComparison && (
               <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-2xl text-xs text-emerald-900 font-bold flex items-center justify-between">
-                <span>FairByte Savings:</span>
+                <span>RestoX Savings:</span>
                 <span>₹{selectedReceiptOrder.billing.traditionalComparison.savings} saved</span>
               </div>
             )}

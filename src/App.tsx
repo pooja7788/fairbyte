@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+﻿import React, { useState, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { 
   Sparkles, 
@@ -55,7 +55,7 @@ import OrdersView from "./components/OrdersView";
 import ProfileView from "./components/ProfileView";
 import HelpSupportView from "./components/HelpSupportView";
 import AdminDashboardView from "./components/AdminDashboardView";
-import FairBytePromiseSection from "./components/FairBytePromiseSection";
+import RestoXPromiseSection from "./components/RestoXPromiseSection";
 import AuthModal from "./components/AuthModal";
 import AddressModal from "./components/AddressModal";
 import NotificationsModal from "./components/NotificationsModal";
@@ -512,8 +512,8 @@ export default function App() {
 
             </section>
 
-            {/* The FairByte Promise Section at the End of the Website */}
-            <FairBytePromiseSection />
+            {/* The RestoX Promise Section at the End of the Website */}
+            <RestoXPromiseSection />
 
           </div>
         )}
@@ -706,7 +706,7 @@ export default function App() {
                 {totalCartCount}
               </span>
               <div className="text-left">
-                <span className="font-extrabold text-xs block leading-none">View FairByte Order</span>
+                <span className="font-extrabold text-xs block leading-none">View RestoX Order</span>
                 <span className="text-[10px] text-emerald-400">Zero surprise platform fees</span>
               </div>
             </div>
@@ -808,14 +808,14 @@ export default function App() {
                 Built as a high-fidelity logistics prototype. Demonstrates complete order-to-tracking flow with distance-based courier dispatch and real-time store synchronization.
               </p>
               <div className="pt-2 text-[10px] text-zinc-500 font-mono">
-                FairByte v2.0.0 • Bengaluru, India
+                RestoX v2.0.0 • Bengaluru, India
               </div>
             </div>
 
           </div>
 
           <div className="border-t border-zinc-900 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
-            <p>© {new Date().getFullYear()} FairByte Technologies. All demo rights reserved.</p>
+            <p>© {new Date().getFullYear()} RestoX Technologies. All demo rights reserved.</p>
             <p className="font-mono text-[11px] text-emerald-500">
               Zero Platform Fees • Transparent Bills
             </p>

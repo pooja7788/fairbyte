@@ -119,7 +119,7 @@ export default function Navbar({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-black text-2xl tracking-tight text-[#1c271b] font-sans">
-                    Fair<span className="text-[#365029]">Byte</span>
+                    Resto<span className="text-[#365029]">X</span>
                   </span>
                   <span className="bg-[#e4ede0] text-[#2b3e21] text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-wider border border-[#cfddc7] hidden sm:inline-block">
                     TRANSPARENT

@@ -1,4 +1,4 @@
-export interface FoodItem {
+﻿export interface FoodItem {
   id: string;
   restaurantId: string;
   title: string;
@@ -54,8 +54,8 @@ export interface TraditionalComparison {
 export interface BillingBreakdown {
   subtotal: number;
   deliveryFee: number;
-  platformFee: number; // ₹0 for FairByte
-  serviceFee: number;  // ₹0 for FairByte
+  platformFee: number; // ₹0 for RestoX
+  serviceFee: number;  // ₹0 for RestoX
   cgst: number;
   sgst: number;
   discount: number;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { motion } from "motion/react";
 import { 
   TrendingDown, 
@@ -28,7 +28,7 @@ export default function BillComparisonHero({ onExploreClick }: BillComparisonHer
   const traditionalAdditionalCharges = traditionalPlatformFee + traditionalDeliveryFee + traditionalPackagingAndService + traditionalSurge;
   const traditionalTotal = traditionalFood + traditionalAdditionalCharges;
 
-  // Calculate FairByte
+  // Calculate RestoX
   const fairByteFood = orderAmount;
   const fairByteCGST = Math.round((orderAmount * 0.025) * 100) / 100;
   const fairByteSGST = Math.round((orderAmount * 0.025) * 100) / 100;
@@ -52,7 +52,7 @@ export default function BillComparisonHero({ onExploreClick }: BillComparisonHer
           See the difference
         </h2>
         <p className="text-sm sm:text-base text-zinc-600 leading-relaxed font-normal">
-          Compare how your bill is calculated on standard delivery apps versus FairByte's transparent restaurant pricing model.
+          Compare how your bill is calculated on standard delivery apps versus RestoX's transparent restaurant pricing model.
         </p>
       </div>
 
@@ -173,17 +173,17 @@ export default function BillComparisonHero({ onExploreClick }: BillComparisonHer
           </div>
         </div>
 
-        {/* CARD 2: FairByte (Hero Winner) */}
+        {/* CARD 2: RestoX (Hero Winner) */}
         <div className="bg-gradient-to-br from-emerald-950 via-zinc-900 to-zinc-950 border-2 border-emerald-500 text-white rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col justify-between relative overflow-hidden">
           <div className="absolute top-0 right-0 bg-emerald-500 text-zinc-950 text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-bl-2xl shadow-md flex items-center gap-1">
             <Sparkles className="w-3.5 h-3.5 fill-current" />
-            <span>FairByte Transparent</span>
+            <span>RestoX Transparent</span>
           </div>
 
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
-                <span>FairByte</span>
+                <span>RestoX</span>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               </h3>
               <p className="text-xs text-emerald-300 mt-1 font-medium">
@@ -268,7 +268,7 @@ export default function BillComparisonHero({ onExploreClick }: BillComparisonHer
       <div className="mt-8 text-center max-w-2xl mx-auto flex items-center justify-center gap-2 text-zinc-400 text-[11px] bg-zinc-50 border border-zinc-200/80 p-3 rounded-2xl">
         <Info className="w-4 h-4 text-zinc-500 shrink-0" />
         <p>
-          <strong>Illustrative comparison:</strong> Shows standard delivery platform markups vs FairByte's zero-hidden-fee transparent model. Taxes remain compliant with applicable statutory standards.
+          <strong>Illustrative comparison:</strong> Shows standard delivery platform markups vs RestoX's zero-hidden-fee transparent model. Taxes remain compliant with applicable statutory standards.
         </p>
       </div>
 

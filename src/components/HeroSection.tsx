@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { motion } from "motion/react";
 import { 
   Sparkles, 
@@ -114,7 +114,7 @@ export default function HeroSection({
                 className="cursor-pointer w-full sm:w-auto bg-white hover:bg-[#f6f2e8] border border-[#ded5c5] text-[#25351f] font-bold px-7 py-4 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 text-sm shadow-2xs"
               >
                 <Play className="w-3.5 h-3.5 fill-[#365029] text-[#365029]" />
-                <span>How FairByte Works</span>
+                <span>How RestoX Works</span>
               </button>
             </motion.div>
 

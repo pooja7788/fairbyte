@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { 
   ChefHat, 
   Bike, 
@@ -74,7 +74,7 @@ export default function AdminDashboardView({
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-black text-lg sm:text-xl text-white tracking-tight font-sans">
-                  FairByte Admin & Kitchen Command
+                  RestoX Admin & Kitchen Command
                 </h1>
                 <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
@@ -490,7 +490,7 @@ export default function AdminDashboardView({
                 </h3>
               </div>
               <p className="text-xs text-zinc-400">
-                FairByte passes 100% of the food menu price to the restaurant and 100% of the courier delivery fee to the rider. There are zero hidden aggregator platform fees.
+                RestoX passes 100% of the food menu price to the restaurant and 100% of the courier delivery fee to the rider. There are zero hidden aggregator platform fees.
               </p>
 
               <div className="overflow-x-auto pt-2">

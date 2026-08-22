@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { 
   ShoppingCart, 
   Trash2, 
@@ -94,7 +94,7 @@ export default function CartView({
           {/* Order Items List */}
           <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-sm space-y-4">
             <h3 className="font-black text-base text-zinc-950 font-sans border-b border-zinc-100 pb-3">
-              Your FairByte Order
+              Your RestoX Order
             </h3>
 
             <div className="divide-y divide-zinc-100">
@@ -205,11 +205,11 @@ export default function CartView({
                   </div>
                 </div>
 
-                {/* FairByte Side */}
+                {/* RestoX Side */}
                 <div className="bg-emerald-900/40 border border-emerald-500/40 rounded-2xl p-4 space-y-2.5 relative overflow-hidden">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-black text-emerald-300 uppercase tracking-wider">
-                      FairByte
+                      RestoX
                     </span>
                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
                   </div>

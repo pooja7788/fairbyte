@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { 
   HelpCircle, 
   Search, 
@@ -60,13 +60,13 @@ export default function HelpSupportView() {
       const lower = text.toLowerCase();
 
       if (lower.includes("7") || lower.includes("km") || lower.includes("delivery fee") || lower.includes("calculate") || lower.includes("distance") || lower.includes("location")) {
-        botReply = "📍 FairByte Delivery Calculation: We calculate exact GPS Haversine distance from the restaurant to your selected address. Delivery fee = Base Fee (₹25) + (Distance in km × ₹7/km). 100% of this fee goes directly to your courier partner with ₹0 surge!";
+        botReply = "📍 RestoX Delivery Calculation: We calculate exact GPS Haversine distance from the restaurant to your selected address. Delivery fee = Base Fee (₹25) + (Distance in km × ₹7/km). 100% of this fee goes directly to your courier partner with ₹0 surge!";
       } else if (lower.includes("delay") || lower.includes("late") || lower.includes("where is my order") || lower.includes("track") || lower.includes("status")) {
         botReply = "🛵 Live Order Tracking: Your courier Alex is currently en route with thermal food packaging. Estimated arrival is in ~14 minutes. You can check the live GPS movement on the 'Orders' / Live Tracking page!";
       } else if (lower.includes("veg") || lower.includes("pure veg") || lower.includes("jain") || lower.includes("diet") || lower.includes("prefer")) {
-        botReply = "🥗 Dietary Preferences: FairByte features top-rated Pure Veg kitchens like Dosa District, Green Bowl, and Spice Route with 100% dedicated vegetarian cooking preparation. You can toggle the 'Pure Veg Only' filter on the homepage!";
+        botReply = "🥗 Dietary Preferences: RestoX features top-rated Pure Veg kitchens like Dosa District, Green Bowl, and Spice Route with 100% dedicated vegetarian cooking preparation. You can toggle the 'Pure Veg Only' filter on the homepage!";
       } else if (lower.includes("platform fee") || lower.includes("pricing") || lower.includes("fee") || lower.includes("transparent") || lower.includes("markup")) {
-        botReply = "🛡️ Transparent Pricing Guarantee: FairByte charges ₹0 Platform Fees and ₹0 Convenience Markups. You pay the exact dine-in menu price + 2.5% CGST + 2.5% SGST + the distance delivery fee (₹7/km). No artificial price inflation!";
+        botReply = "🛡️ Transparent Pricing Guarantee: RestoX charges ₹0 Platform Fees and ₹0 Convenience Markups. You pay the exact dine-in menu price + 2.5% CGST + 2.5% SGST + the distance delivery fee (₹7/km). No artificial price inflation!";
       } else if (lower.includes("cancel") || lower.includes("refund")) {
         botReply = "💳 Instant Refund Guarantee: You can cancel your order for an instant 100% full refund before the kitchen starts cooking. If any item is missing or damaged upon delivery, our support team will credit your original payment source within 15 minutes.";
       } else if (lower.includes("biryani") || lower.includes("butter chicken") || lower.includes("dosa") || lower.includes("recommend")) {
@@ -74,7 +74,7 @@ export default function HelpSupportView() {
       } else if (lower.includes("payment") || lower.includes("upi") || lower.includes("cash") || lower.includes("cod")) {
         botReply = "💳 Flexible Payments: We accept UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, NetBanking, and Cash on Delivery (COD) with ₹0 payment transaction fee.";
       } else {
-        botReply = `Got it! Regarding "${text}": FairByte is committed to 100% authentic restaurant menu prices, fair ₹7/km courier payouts, and rapid support. How else can I personalize your dining experience today?`;
+        botReply = `Got it! Regarding "${text}": RestoX is committed to 100% authentic restaurant menu prices, fair ₹7/km courier payouts, and rapid support. How else can I personalize your dining experience today?`;
       }
 
       const botMsg: SupportChatMessage = {
@@ -98,7 +98,7 @@ export default function HelpSupportView() {
           <HelpCircle className="w-7 h-7" />
         </div>
         <h1 className="text-2xl sm:text-4xl font-black text-[#1c271b] font-sans tracking-tight">
-          FairByte Live Support & Help Center
+          RestoX Live Support & Help Center
         </h1>
         <p className="text-xs sm:text-sm text-[#5f6c5a] max-w-md mx-auto font-medium">
           Instant answers on transparent billing, dynamic ₹7/km delivery tracking, and live customer assistance.
@@ -141,7 +141,7 @@ export default function HelpSupportView() {
             </div>
             <div>
               <h3 className="font-black text-sm text-[#1c271b]">
-                FairByte Live Support Assistant
+                RestoX Live Support Assistant
               </h3>
               <p className="text-[10px] text-[#365229] font-bold flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#365229] animate-pulse" />
@@ -254,7 +254,7 @@ export default function HelpSupportView() {
             <h3 className="font-black text-lg text-[#1c271b] font-sans">
               Frequently Asked Questions
             </h3>
-            <p className="text-xs text-[#63705f]">Everything you need to know about FairByte transparent dining</p>
+            <p className="text-xs text-[#63705f]">Everything you need to know about RestoX transparent dining</p>
           </div>
 
           <div className="relative w-full sm:w-64">

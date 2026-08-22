@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { UtensilsCrossed, Bike, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
 
 export default function TransparentPricingSection() {
@@ -12,7 +12,7 @@ export default function TransparentPricingSection() {
           <span>TRANSPARENT PRICING MODEL</span>
         </div>
         <h2 className="text-3xl sm:text-4xl font-black text-zinc-950 tracking-tight font-sans">
-          How FairByte Works
+          How RestoX Works
         </h2>
         <p className="text-sm sm:text-base text-zinc-600 leading-relaxed font-normal">
           A radically straightforward food delivery experience built on honesty, fairness, and complete bill clarity.

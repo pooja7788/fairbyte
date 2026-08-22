@@ -1,7 +1,7 @@
-import React from "react";
+﻿import React from "react";
 import { ShieldCheck, CheckCircle2, Utensils, Bike, Sparkles } from "lucide-react";
 
-export default function FairBytePromiseSection() {
+export default function RestoXPromiseSection() {
   return (
     <section className="mt-16 mb-8 max-w-5xl mx-auto px-4">
       <div className="bg-white border border-[#eae4d8] rounded-[2.5rem] p-8 sm:p-10 lg:p-12 shadow-sm relative overflow-hidden">
@@ -26,7 +26,7 @@ export default function FairBytePromiseSection() {
               </div>
               <div>
                 <h3 className="font-black text-2xl text-[#1c271b] tracking-tight">
-                  The FairByte Promise
+                  The RestoX Promise
                 </h3>
                 <p className="text-xs sm:text-sm text-[#616e5c] font-medium mt-0.5">
                   Pure transparency at checkout with zero hidden markups

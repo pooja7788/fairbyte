@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { ShieldCheck, ArrowRight } from "lucide-react";
 
 interface OffersViewProps {
@@ -11,7 +11,7 @@ export default function OffersView({ onBrowseRestaurants }: OffersViewProps) {
       <ShieldCheck className="w-12 h-12 text-emerald-500 mx-auto" />
       <h2 className="text-xl font-black text-zinc-950">Pure Menu Pricing</h2>
       <p className="text-xs text-zinc-500">
-        FairByte does not inflate base prices or rely on gimmicky coupons. You always get direct restaurant menu pricing.
+        RestoX does not inflate base prices or rely on gimmicky coupons. You always get direct restaurant menu pricing.
       </p>
       {onBrowseRestaurants && (
         <button

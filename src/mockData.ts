@@ -1,4 +1,4 @@
-import { 
+﻿import { 
   Restaurant, 
   FoodItem, 
   Address, 
@@ -825,7 +825,7 @@ export const MOCK_NOTIFICATIONS: AppNotification[] = [
   {
     id: "notif-2",
     title: "Transparent Pricing Verified ✨",
-    message: "You saved ₹64.50 on your last order with FairByte zero platform fees!",
+    message: "You saved ₹64.50 on your last order with RestoX zero platform fees!",
     timeAgo: "Yesterday",
     read: false,
     type: "system"
@@ -835,14 +835,14 @@ export const MOCK_NOTIFICATIONS: AppNotification[] = [
 export const MOCK_FAQS: FAQItem[] = [
   {
     id: "faq-1",
-    question: "How does FairByte charge true restaurant menu prices?",
-    answer: "Unlike traditional food delivery apps that mark up food items by 15% to 30%, FairByte partners directly with kitchens and lists their in-store menu prices without hidden menu inflation.",
+    question: "How does RestoX charge true restaurant menu prices?",
+    answer: "Unlike traditional food delivery apps that mark up food items by 15% to 30%, RestoX partners directly with kitchens and lists their in-store menu prices without hidden menu inflation.",
     category: "pricing"
   },
   {
     id: "faq-2",
-    question: "Why does FairByte charge ₹0 platform fee and ₹0 service fee?",
-    answer: "FairByte believes delivery logistics should be straightforward. You pay the restaurant for their food with standard 2.5% CGST + 2.5% SGST, and pay a fair, transparent delivery fee directly to the courier. No random platform convenience or surge fees.",
+    question: "Why does RestoX charge ₹0 platform fee and ₹0 service fee?",
+    answer: "RestoX believes delivery logistics should be straightforward. You pay the restaurant for their food with standard 2.5% CGST + 2.5% SGST, and pay a fair, transparent delivery fee directly to the courier. No random platform convenience or surge fees.",
     category: "pricing"
   },
   {
@@ -859,7 +859,7 @@ export const MOCK_FAQS: FAQItem[] = [
   },
   {
     id: "faq-5",
-    question: "What is FairByte's cancellation and refund policy?",
+    question: "What is RestoX's cancellation and refund policy?",
     answer: "If the restaurant has not yet accepted your order, you can cancel instantly for a full 100% refund. In case of any missing or damaged item, our 24/7 in-app support resolves refunds within minutes.",
     category: "refunds"
   }
@@ -869,22 +869,22 @@ export const MOCK_SUPPORT_INITIAL_MESSAGES: SupportChatMessage[] = [
   {
     id: "msg-1",
     sender: "support",
-    text: "Hello! Welcome to FairByte Support. How can we help you today with your orders, transparent ₹7/km pricing, dietary choices, or live tracking?",
+    text: "Hello! Welcome to RestoX Support. How can we help you today with your orders, transparent ₹7/km pricing, dietary choices, or live tracking?",
     timestamp: "Just now"
   }
 ];
 
 
-// Helper to compute FairByte transparent billing + illustrative traditional comparison
+// Helper to compute RestoX transparent billing + illustrative traditional comparison
 export function computeBilling(
   subtotal: number, 
   deliveryFee: number = 32,
   distanceKm?: number
 ): BillingBreakdown {
-  const platformFee = 0; // FairByte zero platform fee
-  const serviceFee = 0;  // FairByte zero service fee
+  const platformFee = 0; // RestoX zero platform fee
+  const serviceFee = 0;  // RestoX zero service fee
 
-  // FairByte Standard Transparent Billing:
+  // RestoX Standard Transparent Billing:
   // CGST: 2.5% of food subtotal
   // SGST: 2.5% of food subtotal
   const cgst = Math.round((subtotal * 0.025) * 100) / 100;

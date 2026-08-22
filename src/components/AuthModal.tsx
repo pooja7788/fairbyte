@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   X, 
@@ -133,8 +133,8 @@ export default function AuthModal({
           </div>
           <div>
             <h2 className="text-xl font-black text-zinc-950 font-sans tracking-tight">
-              {authMode === "login" && "Welcome back to FairByte"}
-              {authMode === "signup" && "Create your FairByte Account"}
+              {authMode === "login" && "Welcome back to RestoX"}
+              {authMode === "signup" && "Create your RestoX Account"}
               {authMode === "otp" && "Verify Mobile OTP"}
               {authMode === "forgot" && "Reset your Password"}
             </h2>
@@ -205,7 +205,7 @@ export default function AuthModal({
               disabled={isLoading}
               className="cursor-pointer w-full bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-black py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-98"
             >
-              {isLoading ? "Signing in..." : "Login to FairByte"}
+              {isLoading ? "Signing in..." : "Login to RestoX"}
             </button>
 
             <div className="relative flex py-1 items-center">
@@ -292,7 +292,7 @@ export default function AuthModal({
                 className="w-4 h-4 rounded text-emerald-600 border-zinc-300"
               />
               <label htmlFor="terms" className="text-[11px] text-zinc-600">
-                I agree to FairByte Transparent Pricing & Terms
+                I agree to RestoX Transparent Pricing & Terms
               </label>
             </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { 
   User, 
   MapPin, 
@@ -120,7 +120,7 @@ export default function ProfileView({
           { id: "account", label: "My Account", icon: User },
           { id: "addresses", label: `Addresses (${addresses.length})`, icon: MapPin },
           { id: "payments", label: "Payments", icon: CreditCard },
-          { id: "about", label: "About FairByte", icon: ShieldCheck }
+          { id: "about", label: "About RestoX", icon: ShieldCheck }
         ].map((tab) => {
           const Icon = tab.icon;
           return (
@@ -366,17 +366,17 @@ export default function ProfileView({
               F
             </div>
             <div>
-              <h3 className="font-black text-lg text-zinc-950 font-sans">About FairByte</h3>
+              <h3 className="font-black text-lg text-zinc-950 font-sans">About RestoX</h3>
               <p className="text-xs text-emerald-700 font-bold">"Your food. The restaurant's price. Fair delivery."</p>
             </div>
           </div>
 
           <div className="space-y-4 text-xs text-zinc-600 leading-relaxed">
             <p>
-              FairByte is built on the simple belief that ordering food should be honest and transparent. Traditional food aggregators inflate menu items by up to 30% and add unexpected platform and service fees right before checkout.
+              RestoX is built on the simple belief that ordering food should be honest and transparent. Traditional food aggregators inflate menu items by up to 30% and add unexpected platform and service fees right before checkout.
             </p>
             <p>
-              With FairByte:
+              With RestoX:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 font-medium text-zinc-800">
               <li><strong>Direct Menu Prices:</strong> You pay what the restaurant charges in their dine-in menu.</li>
