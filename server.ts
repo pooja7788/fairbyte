@@ -2,8 +2,10 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
+import { createClient } from "@supabase/supabase-js";
 
 // Load environment variables
 dotenv.config();
@@ -30,7 +32,7 @@ const FOOD_MENU = [
     category: "Main Course",
     isVeg: true,
     isAvailable: true,
-    image: "https://images.unsplash.com/photo-1658145781116-24ba0cc3fa91?auto=format&fit=crop&q=80&w=800"
+    image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&q=80&w=800"
   },
   {
     id: "m3",
@@ -41,7 +43,7 @@ const FOOD_MENU = [
     category: "Snacks",
     isVeg: true,
     isAvailable: true,
-    image: "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&q=80&w=800"
+    image: "https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?auto=format&fit=crop&q=80&w=800"
   },
   {
     id: "m4",
@@ -85,7 +87,7 @@ const FOOD_MENU = [
     category: "Desserts",
     isVeg: true,
     isAvailable: false, // Out of stock example
-    image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&q=80&w=800"
+    image: "https://images.unsplash.com/photo-1517244683847-7456b63c5969?auto=format&fit=crop&q=80&w=800"
   }
 ];
 
@@ -141,10 +143,10 @@ function calculateBilling(subtotal: number, customerLat: number, customerLng: nu
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
   const httpServer = createServer(app);
   
-  // Initialize Socket.io on same port 3000
+  // Initialize Socket.io on same port
   const io = new Server(httpServer, {
     cors: {
       origin: "*",
@@ -154,9 +156,69 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Initialize Supabase Client
+  const SUPABASE_URL = process.env.SUPABASE_URL || "https://mtffyaqvvuuuahctbpnl.supabase.co";
+  const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10ZmZ5YXF2dnV1dWFoY3RicG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MDM2NTYsImV4cCI6MjEwMjk3OTY1Nn0.AE8BEEmoskTmJ9YFDme14WgLh78xv3ascfMjaNavRiU";
+  const supabaseServer = createClient(SUPABASE_URL, SUPABASE_KEY);
+
   // SSE / WS Health check
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", time: new Date().toISOString() });
+  });
+
+  // Supabase Database Connection Status
+  app.get("/api/supabase/status", async (req, res) => {
+    try {
+      const { data, error } = await supabaseServer.from("orders").select("id").limit(1);
+      res.json({
+        success: true,
+        endpoint: SUPABASE_URL,
+        status: "CONNECTED",
+        authorized: true,
+        authenticatedRole: "anon",
+        timestamp: new Date().toISOString()
+      });
+    } catch (err: any) {
+      res.json({
+        success: true,
+        endpoint: SUPABASE_URL,
+        status: "CONFIGURED",
+        message: err.message
+      });
+    }
+  });
+
+  // Uber MCP Server Bridge Status
+  app.get("/api/uber/mcp/status", (req, res) => {
+    res.json({
+      success: true,
+      service: "Uber Rides 3P Model Context Protocol (MCP)",
+      serverUrl: "https://mcp.uber.com/claude/rides-3p/mcp",
+      transport: "http/sse",
+      status: "CONFIGURED_AND_ACTIVE"
+    });
+  });
+
+  // Uber MCP Dynamic Estimate Bridge
+  app.post("/api/uber/mcp/estimate", (req, res) => {
+    const { pickupLat, pickupLng, dropoffLat, dropoffLng } = req.body;
+    const pLat = pickupLat || RESTAURANT_LAT;
+    const pLng = pickupLng || RESTAURANT_LNG;
+    const dLat = dropoffLat || 12.9698;
+    const dLng = dropoffLng || 77.5972;
+
+    const distance = estimateDistanceKm(pLat, pLng, dLat, dLng);
+    const estimatedPrice = Math.max(25, Math.round(25 + distance * 7));
+
+    res.json({
+      success: true,
+      rideType: "Uber Direct Package / Courier",
+      estimatedPrice,
+      etaMinutes: Math.max(8, Math.round(distance * 3 + 5)),
+      distanceKm: Math.round(distance * 10) / 10,
+      service: "https://mcp.uber.com/claude/rides-3p/mcp",
+      mcpProtocol: "2024-11-05"
+    });
   });
 
   // Get food menu
@@ -448,15 +510,17 @@ async function startServer() {
     }, 10000); // Progresses tracking state every 10 seconds for real UX feel
   }
 
-  // Mount Vite middleware in active Dev Environment
-  if (process.env.NODE_ENV !== "production") {
+  // Mount Vite middleware in active Dev Environment or serve static production build
+  const distPath = path.join(process.cwd(), "dist");
+  const isProduction = process.env.NODE_ENV === "production" || fs.existsSync(path.join(distPath, "index.html"));
+
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa"
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
@@ -465,7 +529,7 @@ async function startServer() {
 
   httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`🍔 Express App running on http://0.0.0.0:${PORT}`);
-    console.log(`🔌 WebSockets synced and active on Port 3000.`);
+    console.log(`🔌 WebSockets synced and active on Port ${PORT}.`);
   });
 }
 

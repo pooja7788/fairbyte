@@ -347,55 +347,58 @@ export default function CheckoutView({
 
             <div className="space-y-3 text-xs">
               <div className="flex justify-between items-center text-zinc-700">
-                <span>Food Subtotal (Menu Price)</span>
-                <span className="font-bold text-zinc-950 font-mono">₹{billing.subtotal}</span>
+                <span>Food subtotal</span>
+                <span className="font-bold text-zinc-950 font-mono">₹{billing.subtotal.toFixed(2)}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-zinc-700">
+                <span>CGST (2.5%)</span>
+                <span className="font-bold text-zinc-950 font-mono">₹{billing.cgst.toFixed(2)}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-zinc-700">
+                <span>SGST (2.5%)</span>
+                <span className="font-bold text-zinc-950 font-mono">₹{billing.sgst.toFixed(2)}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-emerald-700 font-bold">
+                <span className="flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Platform fee</span>
+                </span>
+                <span className="font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">
+                  ₹0.00
+                </span>
               </div>
 
               <div className="flex justify-between items-center text-zinc-700">
                 <span className="flex items-center gap-1.5">
-                  <Bike className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Delivery Charge</span>
+                  <Bike className="w-3.5 h-3.5 text-[#365229]" />
+                  <span>Delivery {billing.distanceKm ? `(${billing.distanceKm} km @ ₹7/km)` : ""}</span>
                 </span>
                 <span className="font-bold text-zinc-950 font-mono">
-                  {billing.deliveryFee === 0 ? "FREE" : `₹${billing.deliveryFee}`}
+                  {billing.deliveryFee === 0 ? "FREE" : `₹${billing.deliveryFee.toFixed(2)}`}
                 </span>
               </div>
-
-              <div className="flex justify-between items-center text-emerald-700 font-bold">
-                <span className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Platform Fee</span>
-                </span>
-                <span className="font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">
-                  ₹0
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center text-emerald-700 font-bold">
-                <span className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Service Fee</span>
-                </span>
-                <span className="font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">
-                  ₹0
-                </span>
-              </div>
-
-              {billing.discount > 0 && (
-                <div className="flex justify-between items-center text-emerald-700 font-bold">
-                  <span>Discount Applied ({billing.appliedCoupon?.code})</span>
-                  <span className="font-mono">-₹{billing.discount}</span>
-                </div>
-              )}
 
               <div className="border-t-2 border-zinc-200 pt-4 flex justify-between items-center">
                 <div>
-                  <span className="font-extrabold text-zinc-950 text-base block">Final Total</span>
-                  <span className="text-[11px] text-zinc-400">All fees included</span>
+                  <span className="font-extrabold text-zinc-950 text-base block">Total</span>
+                  <span className="text-[11px] text-zinc-400">Guaranteed final amount</span>
                 </div>
                 <span className="font-black text-3xl text-emerald-700 font-sans">
-                  ₹{billing.grandTotal}
+                  ₹{billing.grandTotal.toFixed(2)}
                 </span>
+              </div>
+
+              {/* Transparency Notice */}
+              <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-3 text-center mt-2">
+                <p className="text-xs text-emerald-900 font-bold">
+                  No platform fee. You see the complete price before ordering.
+                </p>
+                <p className="text-[11px] text-emerald-700 mt-0.5">
+                  Restaurant menu price + transparent GST + delivery
+                </p>
               </div>
             </div>
 
@@ -411,7 +414,7 @@ export default function CheckoutView({
                   <span>Securing Order...</span>
                 </div>
               ) : (
-                <span>Place Order • ₹{billing.grandTotal}</span>
+                <span>Place Order • ₹{billing.grandTotal.toFixed(2)}</span>
               )}
             </button>
 

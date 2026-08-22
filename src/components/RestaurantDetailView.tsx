@@ -23,9 +23,8 @@ interface RestaurantDetailViewProps {
   onRemoveFromCart: (item: FoodItem) => void;
   onBack: () => void;
   onOpenCart: () => void;
-  favorites: string[];
-  onToggleFavoriteRestaurant: (id: string) => void;
-  onToggleFavoriteItem: (id: string) => void;
+  dynamicDeliveryFee?: number;
+  dynamicDistanceKm?: number;
 }
 
 export default function RestaurantDetailView({
@@ -36,9 +35,8 @@ export default function RestaurantDetailView({
   onRemoveFromCart,
   onBack,
   onOpenCart,
-  favorites,
-  onToggleFavoriteRestaurant,
-  onToggleFavoriteItem
+  dynamicDeliveryFee,
+  dynamicDistanceKm
 }: RestaurantDetailViewProps) {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [menuSearchQuery, setMenuSearchQuery] = useState("");
@@ -74,8 +72,8 @@ export default function RestaurantDetailView({
     });
   }, [restaurantItems, menuSearchQuery, selectedCategory, onlyVegMenu]);
 
-  const isFav = favorites.includes(restaurant.id);
   const totalCartCount = cart.reduce((acc, c) => acc + c.quantity, 0);
+  const displayDeliveryFee = dynamicDeliveryFee !== undefined ? dynamicDeliveryFee : restaurant.deliveryFee;
 
   return (
     <div className="space-y-8 pb-16">
@@ -89,16 +87,6 @@ export default function RestaurantDetailView({
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Restaurants</span>
         </button>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onToggleFavoriteRestaurant(restaurant.id)}
-            className="cursor-pointer p-2.5 rounded-2xl bg-white hover:bg-red-50 border border-zinc-200 text-zinc-600 hover:text-red-500 transition-colors shadow-2xs"
-            title={isFav ? "Remove from favorites" : "Add to favorites"}
-          >
-            <Heart className={`w-4 h-4 ${isFav ? "fill-red-500 text-red-500" : ""}`} />
-          </button>
-        </div>
       </div>
 
       {/* 2. RESTAURANT HERO BANNER & HEADER */}
@@ -152,22 +140,24 @@ export default function RestaurantDetailView({
             </div>
 
             <div className="border-l border-zinc-200 pl-3">
-              <span className="text-zinc-400 text-[10px] block uppercase font-bold">Delivery</span>
-              <span className="font-bold text-zinc-900">{restaurant.deliveryTimeMin} mins</span>
+              <span className="text-zinc-400 text-[10px] block uppercase font-bold">Distance</span>
+              <span className="font-bold text-zinc-900">
+                {dynamicDistanceKm !== undefined ? `${dynamicDistanceKm} km` : "Nearby"}
+              </span>
             </div>
 
             <div className="border-l border-zinc-200 pl-3">
-              <span className="text-zinc-400 text-[10px] block uppercase font-bold">Courier Fee</span>
-              <span className="font-bold text-zinc-900">₹{restaurant.deliveryFee}</span>
+              <span className="text-zinc-400 text-[10px] block uppercase font-bold">Est. Time</span>
+              <span className="font-bold text-zinc-900">{restaurant.deliveryTimeMin} mins</span>
             </div>
           </div>
 
         </div>
 
-        {/* Offers Pill Ribbon */}
-        <div className="px-6 py-3 bg-emerald-50/70 border-t border-emerald-100 flex items-center gap-2 text-xs font-bold text-emerald-900">
-          <Tag className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>Special Offer: Use code <span className="font-mono underline font-black">FAIRFREE</span> for free delivery above ₹299!</span>
+        {/* Transparent Pricing Ribbon */}
+        <div className="px-6 py-3 bg-[#f3f7ee] border-t border-[#e2edd9] flex items-center gap-2 text-xs font-bold text-[#2d4023]">
+          <ShieldCheck className="w-4 h-4 text-[#355029] shrink-0" />
+          <span>True Menu Pricing Guaranteed • Transparent ₹7/km distance delivery • ₹0 Platform markup</span>
         </div>
 
       </div>
@@ -259,7 +249,6 @@ export default function RestaurantDetailView({
           {filteredItems.map((item) => {
             const cartEntry = cart.find(c => c.item.id === item.id);
             const quantity = cartEntry ? cartEntry.quantity : 0;
-            const isItemFav = favorites.includes(item.id);
 
             return (
               <FoodCard
@@ -269,8 +258,6 @@ export default function RestaurantDetailView({
                 quantityInCart={quantity}
                 onAddToCart={onAddToCart}
                 onRemoveFromCart={onRemoveFromCart}
-                isFavorite={isItemFav}
-                onToggleFavorite={() => onToggleFavoriteItem(item.id)}
               />
             );
           })}

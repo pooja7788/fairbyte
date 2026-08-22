@@ -5,7 +5,6 @@ import {
   DeliveryPartner, 
   TraditionalComparison, 
   BillingBreakdown,
-  Coupon,
   Order,
   UserProfile,
   AppNotification,
@@ -28,6 +27,8 @@ export const MOCK_RESTAURANTS: Restaurant[] = [
     bannerImage: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=1200",
     address: "12th Main, Indiranagar, Bengaluru",
     categories: ["Recommended", "Starters", "Main Course", "Biryani", "Breads", "Desserts", "Beverages"],
+    lat: 12.9784,
+    lng: 77.6408,
     featured: true,
     isPureVeg: false
   },
@@ -45,6 +46,8 @@ export const MOCK_RESTAURANTS: Restaurant[] = [
     bannerImage: "https://images.unsplash.com/photo-1610192244261-3f33de3f55e4?auto=format&fit=crop&q=80&w=1200",
     address: "5th Block, Koramangala, Bengaluru",
     categories: ["Recommended", "Dosas & Uttapams", "Idli & Vada", "Meals", "Beverages"],
+    lat: 12.9343,
+    lng: 77.6253,
     featured: true,
     isPureVeg: true
   },
@@ -62,6 +65,8 @@ export const MOCK_RESTAURANTS: Restaurant[] = [
     bannerImage: "https://images.unsplash.com/photo-1633945274405-b6c8069047b0?auto=format&fit=crop&q=80&w=1200",
     address: "Church Street, MG Road, Bengaluru",
     categories: ["Recommended", "Dum Biryanis", "Starters & Kebabs", "Accompaniments", "Desserts"],
+    lat: 12.9756,
+    lng: 77.6067,
     featured: true,
     isPureVeg: false
   },
@@ -79,6 +84,8 @@ export const MOCK_RESTAURANTS: Restaurant[] = [
     bannerImage: "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&q=80&w=1200",
     address: "100 Feet Road, Indiranagar, Bengaluru",
     categories: ["Recommended", "Burgers", "Fries & Sides", "Beverages & Shakes", "Desserts"],
+    lat: 12.9716,
+    lng: 77.6412,
     featured: false,
     isPureVeg: false
   },
@@ -96,6 +103,8 @@ export const MOCK_RESTAURANTS: Restaurant[] = [
     bannerImage: "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=1200",
     address: "Lavelle Road, Shanthala Nagar, Bengaluru",
     categories: ["Recommended", "Grain Bowls", "Salads", "Wraps", "Cold Pressed Juices"],
+    lat: 12.9698,
+    lng: 77.5972,
     featured: false,
     isPureVeg: true
   },
@@ -113,6 +122,8 @@ export const MOCK_RESTAURANTS: Restaurant[] = [
     bannerImage: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&q=80&w=1200",
     address: "HSR Layout Sector 2, Bengaluru",
     categories: ["Recommended", "Starters", "Main Course", "Thalis", "Breads", "Beverages"],
+    lat: 12.9121,
+    lng: 77.6446,
     featured: false,
     isPureVeg: false
   }
@@ -144,7 +155,7 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     category: "Recommended",
     isVeg: true,
     isAvailable: true,
-    image: "https://images.unsplash.com/photo-1658145781116-24ba0cc3fa91?auto=format&fit=crop&q=80&w=800",
+    image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&q=80&w=800",
     isPopular: true,
     prepTime: "15 min"
   },
@@ -171,7 +182,7 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     category: "Starters",
     isVeg: true,
     isAvailable: true,
-    image: "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&q=80&w=800",
+    image: "https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?auto=format&fit=crop&q=80&w=800",
     prepTime: "10 min"
   },
   {
@@ -250,7 +261,7 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     category: "Desserts",
     isVeg: true,
     isAvailable: true,
-    image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&q=80&w=800",
+    image: "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&q=80&w=800",
     prepTime: "5 min"
   },
 
@@ -279,7 +290,7 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     category: "Dosas & Uttapams",
     isVeg: true,
     isAvailable: true,
-    image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&q=80&w=800",
+    image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&q=80&w=800",
     isPopular: true,
     prepTime: "15 min"
   },
@@ -374,7 +385,20 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     category: "Desserts",
     isVeg: true,
     isAvailable: true,
-    image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&q=80&w=800",
+    image: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?auto=format&fit=crop&q=80&w=800",
+    prepTime: "5 min"
+  },
+  {
+    id: "bj-5",
+    restaurantId: "rest-biryani-junction",
+    title: "Mirchi Ka Salan & Burani Raita Duo",
+    description: "Traditional Hyderabadi spiced peanut curry sauce and garlic-infused beaten curd.",
+    price: 90,
+    rating: 4.7,
+    category: "Accompaniments",
+    isVeg: true,
+    isAvailable: true,
+    image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&q=80&w=800",
     prepTime: "5 min"
   },
 
@@ -416,7 +440,7 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     category: "Fries & Sides",
     isVeg: true,
     isAvailable: true,
-    image: "https://images.unsplash.com/photo-1576107232684-1279f3908594?auto=format&fit=crop&q=80&w=800",
+    image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&q=80&w=800",
     prepTime: "10 min"
   },
   {
@@ -431,6 +455,19 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     isAvailable: true,
     image: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&q=80&w=800",
     prepTime: "5 min"
+  },
+  {
+    id: "bl-5",
+    restaurantId: "rest-burger-lab",
+    title: "Molten Chocolate Lava Cake",
+    description: "Warm Belgian chocolate cake with gooey melted truffle center, dusted with icing sugar.",
+    price: 150,
+    rating: 4.8,
+    category: "Desserts",
+    isVeg: true,
+    isAvailable: true,
+    image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&q=80&w=800",
+    prepTime: "10 min"
   },
 
   // 5. Green Bowl
@@ -474,6 +511,32 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     image: "https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&q=80&w=800",
     prepTime: "5 min"
   },
+  {
+    id: "gb-4",
+    restaurantId: "rest-green-bowl",
+    title: "Smoked Tofu Quinoa Power Bowl",
+    description: "Organic tricolor quinoa, grilled smoked tofu steaks, edamame, shredded carrots, and sesame miso glaze.",
+    price: 320,
+    rating: 4.8,
+    category: "Grain Bowls",
+    isVeg: true,
+    isAvailable: true,
+    image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800",
+    prepTime: "15 min"
+  },
+  {
+    id: "gb-5",
+    restaurantId: "rest-green-bowl",
+    title: "Grilled Herb Hummus & Falafel Wrap",
+    description: "Whole wheat tortilla roll stuffed with crispy falafels, garlic hummus, pickled turnip and crisp lettuce.",
+    price: 230,
+    rating: 4.7,
+    category: "Wraps",
+    isVeg: true,
+    isAvailable: true,
+    image: "https://images.unsplash.com/photo-1606491956689-2ea866880c84?auto=format&fit=crop&q=80&w=800",
+    prepTime: "10 min"
+  },
 
   // 6. Curry House
   {
@@ -502,6 +565,58 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     image: "https://images.unsplash.com/photo-1610192244261-3f33de3f55e4?auto=format&fit=crop&q=80&w=800",
     isPopular: true,
     prepTime: "20 min"
+  },
+  {
+    id: "ch-3",
+    restaurantId: "rest-curry-house",
+    title: "Paneer Tikka Angara",
+    description: "Spicy charred tandoori cottage cheese cubes marinated in mustard oil, ajwain and Kashmiri chili.",
+    price: 240,
+    rating: 4.8,
+    category: "Starters",
+    isVeg: true,
+    isAvailable: true,
+    image: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?auto=format&fit=crop&q=80&w=800",
+    prepTime: "15 min"
+  },
+  {
+    id: "ch-4",
+    restaurantId: "rest-curry-house",
+    title: "Kadhai Paneer Special",
+    description: "Cottage cheese cubes tossed with chunky bell peppers, onions, and freshly ground kadhai masala gravy.",
+    price: 280,
+    rating: 4.8,
+    category: "Main Course",
+    isVeg: true,
+    isAvailable: true,
+    image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&q=80&w=800",
+    prepTime: "18 min"
+  },
+  {
+    id: "ch-5",
+    restaurantId: "rest-curry-house",
+    title: "Tandoori Butter Roti (3 pcs)",
+    description: "Traditional whole wheat bread roasted in clay tandoor and brushed generously with churned butter.",
+    price: 75,
+    rating: 4.7,
+    category: "Breads",
+    isVeg: true,
+    isAvailable: true,
+    image: "https://images.unsplash.com/photo-1606491956689-2ea866880c84?auto=format&fit=crop&q=80&w=800",
+    prepTime: "10 min"
+  },
+  {
+    id: "ch-6",
+    restaurantId: "rest-curry-house",
+    title: "Fresh Mint Chaas (Spiced Buttermilk)",
+    description: "Chilled churned spiced curd drink seasoned with roasted cumin powder, black salt, and fresh garden mint.",
+    price: 55,
+    rating: 4.8,
+    category: "Beverages",
+    isVeg: true,
+    isAvailable: true,
+    image: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&q=80&w=800",
+    prepTime: "5 min"
   }
 ];
 
@@ -566,32 +681,37 @@ export const MOCK_DELIVERY_PARTNER: DeliveryPartner = {
   currentLng: 77.5946
 };
 
-export const MOCK_COUPONS: Coupon[] = [
-  {
-    code: "FAIRFREE",
-    title: "Free Delivery Above ₹299",
-    description: "Enjoy zero delivery fee on orders ₹299 and above.",
-    discountType: "free_delivery",
-    discountValue: 48,
-    minOrder: 299
-  },
-  {
-    code: "WEEKEND15",
-    title: "15% Off Your Meal",
-    description: "Get 15% discount on food subtotal up to ₹75.",
-    discountType: "percentage",
-    discountValue: 15,
-    minOrder: 350
-  },
-  {
-    code: "WELCOMEFB",
-    title: "Flat ₹50 Off Welcome Treat",
-    description: "Flat ₹50 savings on your FairByte order above ₹250.",
-    discountType: "fixed",
-    discountValue: 50,
-    minOrder: 250
-  }
-];
+// Helper logic for distance calculation (Haversine formula in Km)
+export function calculateHaversineDistance(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
+
+// Dynamic location-based delivery fee: Direct ₹7 per km (minimum ₹14)
+export function calculateDynamicDeliveryFee(
+  restaurantLat: number,
+  restaurantLng: number,
+  customerLat: number,
+  customerLng: number
+): { fee: number; distanceKm: number } {
+  const distanceKm = Math.max(0.8, calculateHaversineDistance(restaurantLat, restaurantLng, customerLat, customerLng));
+  const fee = Math.max(14, Math.round(distanceKm * 7));
+  return { fee, distanceKm };
+}
 
 export const MOCK_PAST_ORDERS: Order[] = [
   {
@@ -601,13 +721,13 @@ export const MOCK_PAST_ORDERS: Order[] = [
     restaurantImage: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&q=80&w=800",
     items: [
       {
-        item: MOCK_MENU_ITEMS[0], // Butter chicken bowl
+        item: MOCK_MENU_ITEMS[0], // Butter chicken bowl (320)
         restaurantId: "rest-spice-route",
         restaurantName: "Spice Route",
         quantity: 1
       },
       {
-        item: MOCK_MENU_ITEMS[7], // Garlic naan
+        item: MOCK_MENU_ITEMS[7], // Garlic naan (95 x 2 = 190)
         restaurantId: "rest-spice-route",
         restaurantName: "Spice Route",
         quantity: 2
@@ -618,10 +738,11 @@ export const MOCK_PAST_ORDERS: Order[] = [
       deliveryFee: 48,
       platformFee: 0,
       serviceFee: 0,
-      cgst: 0,
-      sgst: 0,
+      cgst: 12.75,
+      sgst: 12.75,
       discount: 0,
-      grandTotal: 558,
+      grandTotal: 583.5,
+      distanceKm: 1.1,
       traditionalComparison: {
         foodPrice: 510,
         platformFee: 15,
@@ -629,8 +750,8 @@ export const MOCK_PAST_ORDERS: Order[] = [
         deliveryFee: 48,
         surgeFee: 30,
         traditionalTotal: 648,
-        fairByteTotal: 558,
-        savings: 90
+        fairByteTotal: 583.5,
+        savings: 64.5
       }
     },
     status: "DELIVERED",
@@ -648,13 +769,13 @@ export const MOCK_PAST_ORDERS: Order[] = [
     restaurantImage: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?auto=format&fit=crop&q=80&w=800",
     items: [
       {
-        item: MOCK_MENU_ITEMS[10], // Mysore masala dosa
+        item: MOCK_MENU_ITEMS[10], // Mysore masala dosa (150 x 2 = 300)
         restaurantId: "rest-dosa-district",
         restaurantName: "Dosa District",
         quantity: 2
       },
       {
-        item: MOCK_MENU_ITEMS[14], // Filter coffee
+        item: MOCK_MENU_ITEMS[14], // Filter coffee (60 x 2 = 120)
         restaurantId: "rest-dosa-district",
         restaurantName: "Dosa District",
         quantity: 2
@@ -662,22 +783,23 @@ export const MOCK_PAST_ORDERS: Order[] = [
     ],
     billing: {
       subtotal: 420,
-      deliveryFee: 35,
+      deliveryFee: 41,
       platformFee: 0,
       serviceFee: 0,
-      cgst: 0,
-      sgst: 0,
-      discount: 35,
-      grandTotal: 420,
+      cgst: 10.5,
+      sgst: 10.5,
+      discount: 0,
+      grandTotal: 482,
+      distanceKm: 0.5,
       traditionalComparison: {
         foodPrice: 420,
         platformFee: 15,
         serviceFee: 35,
-        deliveryFee: 35,
+        deliveryFee: 41,
         surgeFee: 20,
-        traditionalTotal: 525,
-        fairByteTotal: 420,
-        savings: 105
+        traditionalTotal: 531,
+        fairByteTotal: 482,
+        savings: 49
       }
     },
     status: "DELIVERED",
@@ -703,18 +825,10 @@ export const MOCK_NOTIFICATIONS: AppNotification[] = [
   {
     id: "notif-2",
     title: "Transparent Pricing Verified ✨",
-    message: "You saved ₹90 on your last order with FairByte zero platform fees!",
+    message: "You saved ₹64.50 on your last order with FairByte zero platform fees!",
     timeAgo: "Yesterday",
     read: false,
     type: "system"
-  },
-  {
-    id: "notif-3",
-    title: "Weekend Special: Free Delivery 🛵",
-    message: "Use code FAIRFREE on orders above ₹299 this weekend.",
-    timeAgo: "2 days ago",
-    read: false,
-    type: "offer"
   }
 ];
 
@@ -728,13 +842,13 @@ export const MOCK_FAQS: FAQItem[] = [
   {
     id: "faq-2",
     question: "Why does FairByte charge ₹0 platform fee and ₹0 service fee?",
-    answer: "FairByte believes delivery logistics should be straightforward. You pay the restaurant for their food, and pay a fair, transparent delivery fee directly to the courier. No random platform convenience or surge fees.",
+    answer: "FairByte believes delivery logistics should be straightforward. You pay the restaurant for their food with standard 2.5% CGST + 2.5% SGST, and pay a fair, transparent delivery fee directly to the courier. No random platform convenience or surge fees.",
     category: "pricing"
   },
   {
     id: "faq-3",
     question: "How is the delivery fee calculated?",
-    answer: "The delivery fee is calculated purely based on real-time distance from the restaurant to your address (typically base ₹35 + ₹12/km), with zero artificial surge markups.",
+    answer: "The delivery fee is calculated purely based on real-time distance from the restaurant to your address (base ₹25 + ₹7/km), with zero artificial surge markups.",
     category: "delivery"
   },
   {
@@ -755,43 +869,36 @@ export const MOCK_SUPPORT_INITIAL_MESSAGES: SupportChatMessage[] = [
   {
     id: "msg-1",
     sender: "support",
-    text: "Hello! Welcome to FairByte Support. How can we help you today with your orders, pricing or delivery?",
+    text: "Hello! Welcome to FairByte Support. How can we help you today with your orders, transparent ₹7/km pricing, dietary choices, or live tracking?",
     timestamp: "Just now"
   }
 ];
 
-// Helper to compute FairByte transparent billing + illustrative traditional comparison + coupon discount
+
+// Helper to compute FairByte transparent billing + illustrative traditional comparison
 export function computeBilling(
   subtotal: number, 
-  deliveryFee: number = 48,
-  coupon: Coupon | null = null
+  deliveryFee: number = 32,
+  distanceKm?: number
 ): BillingBreakdown {
-  let discount = 0;
-  if (coupon && subtotal >= coupon.minOrder) {
-    if (coupon.discountType === "free_delivery") {
-      discount = deliveryFee;
-    } else if (coupon.discountType === "fixed") {
-      discount = coupon.discountValue;
-    } else if (coupon.discountType === "percentage") {
-      discount = Math.min(75, Math.round((subtotal * coupon.discountValue) / 100));
-    }
-  }
-
-  const effectiveDelivery = coupon?.discountType === "free_delivery" ? 0 : deliveryFee;
   const platformFee = 0; // FairByte zero platform fee
   const serviceFee = 0;  // FairByte zero service fee
-  const cgst = 0;        // Included in direct restaurant menu price
-  const sgst = 0;
-  const grandTotal = Math.max(0, subtotal + effectiveDelivery - (coupon?.discountType !== "free_delivery" ? discount : 0));
+
+  // FairByte Standard Transparent Billing:
+  // CGST: 2.5% of food subtotal
+  // SGST: 2.5% of food subtotal
+  const cgst = Math.round((subtotal * 0.025) * 100) / 100;
+  const sgst = Math.round((subtotal * 0.025) * 100) / 100;
+  
+  const grandTotal = Math.max(0, Math.round((subtotal + cgst + sgst + deliveryFee) * 100) / 100);
 
   // Illustrative traditional delivery simulation:
-  // e.g. for subtotal 320: Additional charges ~90 -> total 410, saving 42
   const traditionalPlatformFee = 15;
   const traditionalServiceFee = Math.max(25, Math.round(subtotal * 0.08));
   const traditionalSurgeFee = Math.max(20, Math.round(subtotal * 0.06));
-  const traditionalDelivery = Math.max(35, deliveryFee);
-  const traditionalTotal = subtotal + traditionalPlatformFee + traditionalServiceFee + traditionalSurgeFee + traditionalDelivery;
-  const savings = Math.max(0, traditionalTotal - grandTotal);
+  const traditionalDelivery = Math.max(35, deliveryFee + 20);
+  const traditionalTotal = Math.round((subtotal + traditionalPlatformFee + traditionalServiceFee + traditionalSurgeFee + traditionalDelivery) * 100) / 100;
+  const savings = Math.max(0, Math.round((traditionalTotal - grandTotal) * 100) / 100);
 
   const traditionalComparison: TraditionalComparison = {
     foodPrice: subtotal,
@@ -806,14 +913,15 @@ export function computeBilling(
 
   return {
     subtotal,
-    deliveryFee: effectiveDelivery,
+    deliveryFee,
     platformFee,
     serviceFee,
     cgst,
     sgst,
-    discount,
+    discount: 0,
     grandTotal,
-    appliedCoupon: coupon,
+    distanceKm,
     traditionalComparison
   };
 }
+

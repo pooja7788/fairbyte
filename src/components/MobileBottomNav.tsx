@@ -79,7 +79,7 @@ export default function MobileBottomNav({
         <button
           onClick={() => onNavigate("profile")}
           className={`cursor-pointer flex flex-col items-center justify-center py-1 gap-1 transition-colors ${
-            currentView === "profile" || currentView === "help" || currentView === "favorites" || currentView === "addresses"
+            currentView === "profile" || currentView === "help" || currentView === "addresses" || currentView === "admin"
               ? "text-emerald-700 font-extrabold"
               : "text-zinc-500 font-medium"
           }`}

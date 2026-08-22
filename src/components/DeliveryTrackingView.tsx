@@ -12,7 +12,8 @@ import {
   ShieldCheck, 
   Sparkles,
   RefreshCw,
-  Navigation
+  Navigation,
+  ArrowRight
 } from "lucide-react";
 import { Order } from "../types";
 
@@ -36,20 +37,29 @@ export default function DeliveryTrackingView({
   onBackToHome,
   onBackToOrders
 }: DeliveryTrackingViewProps) {
-  const [currentStep, setCurrentStep] = useState(order.orderTimelineStep ?? 2);
+  const getStepFromStatus = (status: string) => {
+    switch (status) {
+      case "PLACED": return 0;
+      case "ACCEPTED": return 1;
+      case "PREPARING": return 2;
+      case "READY_FOR_PICKUP":
+      case "RIDER_ASSIGNED": return 3;
+      case "OUT_FOR_DELIVERY":
+      case "DELIVERING": return 4;
+      case "DELIVERED":
+      case "COMPLETED": return 5;
+      default: return 2;
+    }
+  };
+
+  const [currentStep, setCurrentStep] = useState(getStepFromStatus(order.status));
   const [callSimulated, setCallSimulated] = useState(false);
   const [msgSimulated, setMsgSimulated] = useState(false);
 
-  // Auto-advance tracking simulation if desired
+  // Sync step whenever order status is updated (e.g. from Admin dashboard)
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentStep(prev => {
-        if (prev < 4) return prev + 1;
-        return prev;
-      });
-    }, 18000);
-    return () => clearInterval(timer);
-  }, []);
+    setCurrentStep(getStepFromStatus(order.status));
+  }, [order.status]);
 
   const handleSimulateCall = () => {
     setCallSimulated(true);
@@ -306,6 +316,17 @@ export default function DeliveryTrackingView({
               </button>
             </div>
 
+            {/* Direct Open in Uber Button */}
+            <a
+              href={`https://m.uber.com/ul/?action=setPickup&client_id=fairbyte&pickup[latitude]=12.9716&pickup[longitude]=77.5946&pickup[nickname]=${encodeURIComponent(order.restaurantName)}&dropoff[latitude]=${order.address.lat}&dropoff[longitude]=${order.address.lng}&dropoff[nickname]=${encodeURIComponent(order.address.text || order.address.label)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cursor-pointer w-full bg-black hover:bg-zinc-800 text-white text-xs font-black py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 text-center mt-1"
+            >
+              <span>🚕 Open Live in Uber</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </a>
+
             {callSimulated && (
               <p className="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded-xl text-center font-bold">
                 📞 Calling Alex (+91 98765 24109)...
@@ -329,20 +350,31 @@ export default function DeliveryTrackingView({
                 <span className="font-bold text-zinc-900">{order.restaurantName}</span>
               </div>
               <div className="flex justify-between">
-                <span>Food Subtotal:</span>
-                <span className="font-mono">₹{order.billing.subtotal}</span>
+                <span>Food subtotal:</span>
+                <span className="font-mono">₹{order.billing.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>CGST (2.5%):</span>
+                <span className="font-mono">₹{order.billing.cgst.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>SGST (2.5%):</span>
+                <span className="font-mono">₹{order.billing.sgst.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-emerald-700 font-bold">
+                <span>Platform fee:</span>
+                <span className="font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">₹0.00</span>
               </div>
               <div className="flex justify-between">
                 <span>Delivery:</span>
-                <span className="font-mono">₹{order.billing.deliveryFee}</span>
-              </div>
-              <div className="flex justify-between text-emerald-700 font-bold">
-                <span>Platform Markups:</span>
-                <span className="font-mono">₹0 FREE</span>
+                <span className="font-mono">
+                  {order.billing.deliveryFee === 0 ? "FREE" : `₹${order.billing.deliveryFee.toFixed(2)}`}
+                  {order.billing.distanceKm ? ` (${order.billing.distanceKm} km @ ₹7/km)` : ""}
+                </span>
               </div>
               <div className="border-t border-zinc-200 pt-2 flex justify-between font-black text-zinc-950 text-sm">
                 <span>Paid via {order.paymentMethod}:</span>
-                <span className="font-sans text-emerald-700">₹{order.billing.grandTotal}</span>
+                <span className="font-sans text-emerald-700">₹{order.billing.grandTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>

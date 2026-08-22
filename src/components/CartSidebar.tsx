@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "motion/react";
 import { 
   ShoppingCart, 
@@ -11,15 +11,13 @@ import {
   ShieldCheck, 
   TrendingDown, 
   Bike,
-  CheckCircle2,
-  Tag,
+  CheckCircle2, 
   Receipt,
   Utensils,
   Eye,
   AlertCircle
 } from "lucide-react";
-import { CartItem, BillingBreakdown, FoodItem, Coupon } from "../types";
-import { MOCK_COUPONS } from "../mockData";
+import { CartItem, BillingBreakdown, FoodItem } from "../types";
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -30,7 +28,6 @@ interface CartSidebarProps {
   onDecrement: (item: FoodItem) => void;
   onClear: () => void;
   onProceed: () => void;
-  onApplyCoupon: (coupon: Coupon | null) => void;
 }
 
 export default function CartSidebar({
@@ -41,39 +38,11 @@ export default function CartSidebar({
   onIncrement,
   onDecrement,
   onClear,
-  onProceed,
-  onApplyCoupon
+  onProceed
 }: CartSidebarProps) {
-  const [couponInput, setCouponInput] = useState("");
-  const [couponError, setCouponError] = useState("");
-
   if (!isOpen) return null;
 
   const totalItemCount = items.reduce((acc, match) => acc + match.quantity, 0);
-
-  const handleApplyCouponCode = (codeToApply?: string) => {
-    const code = (codeToApply || couponInput).trim().toUpperCase();
-    const found = MOCK_COUPONS.find(c => c.code === code);
-
-    if (!found) {
-      setCouponError("Invalid promo code");
-      return;
-    }
-
-    if (billing && billing.subtotal < found.minOrder) {
-      setCouponError(`Minimum order of ₹${found.minOrder} required for ${found.code}`);
-      return;
-    }
-
-    setCouponError("");
-    onApplyCoupon(found);
-  };
-
-  const handleRemoveCoupon = () => {
-    onApplyCoupon(null);
-    setCouponInput("");
-    setCouponError("");
-  };
 
   return (
     <>
@@ -217,50 +186,6 @@ export default function CartSidebar({
                 ))}
               </div>
 
-              {/* COUPON INPUT SECTION */}
-              <div className="bg-zinc-50 border border-zinc-200/80 p-3.5 rounded-2xl space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-zinc-800">
-                  <span className="flex items-center gap-1.5">
-                    <Tag className="w-4 h-4 text-emerald-600" />
-                    <span>Apply Promo Code</span>
-                  </span>
-                  {billing?.appliedCoupon && (
-                    <button
-                      onClick={handleRemoveCoupon}
-                      className="cursor-pointer text-red-600 text-[11px] hover:underline"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-
-                {billing?.appliedCoupon ? (
-                  <div className="bg-emerald-50 border border-emerald-200 p-2 rounded-xl flex items-center justify-between text-xs text-emerald-900 font-bold">
-                    <span>Applied: {billing.appliedCoupon.code}</span>
-                    <span>Saved ₹{billing.discount}</span>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={couponInput}
-                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                      placeholder="Enter FAIRFREE or WEEKEND15"
-                      className="flex-1 bg-white border border-zinc-200 rounded-xl px-3 py-1.5 text-xs uppercase font-mono font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                    <button
-                      onClick={() => handleApplyCouponCode()}
-                      className="cursor-pointer bg-zinc-950 text-white px-4 py-1.5 rounded-xl text-xs font-bold hover:bg-zinc-800"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                )}
-
-                {couponError && (
-                  <p className="text-[11px] text-red-600 font-medium">{couponError}</p>
-                )}
-              </div>
 
               {/* ------------------------------------------------------------- */}
               {/* SECTION 10: FAIRBYTE TRANSPARENT PRICE COMPARISON */}
@@ -418,46 +343,39 @@ export default function CartSidebar({
             
             <div className="space-y-2 text-xs">
               <div className="flex justify-between items-center text-zinc-700">
-                <span>Food Subtotal</span>
-                <span className="font-bold text-zinc-950 font-mono">₹{billing.subtotal}</span>
+                <span>Food subtotal</span>
+                <span className="font-bold text-zinc-950 font-mono">₹{billing.subtotal.toFixed(2)}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-zinc-700">
+                <span>CGST (2.5%)</span>
+                <span className="font-bold text-zinc-950 font-mono">₹{billing.cgst.toFixed(2)}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-zinc-700">
+                <span>SGST (2.5%)</span>
+                <span className="font-bold text-zinc-950 font-mono">₹{billing.sgst.toFixed(2)}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-emerald-700">
+                <span className="flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Platform fee</span>
+                </span>
+                <span className="font-bold font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">
+                  ₹0.00
+                </span>
               </div>
 
               <div className="flex justify-between items-center text-zinc-700">
                 <span className="flex items-center gap-1.5">
-                  <Bike className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Transparent Delivery</span>
+                  <Bike className="w-3.5 h-3.5 text-[#365229]" />
+                  <span>Delivery {billing.distanceKm ? `(${billing.distanceKm} km @ ₹7/km)` : ""}</span>
                 </span>
                 <span className="font-bold text-zinc-950 font-mono">
-                  {billing.deliveryFee === 0 ? "FREE" : `₹${billing.deliveryFee}`}
+                  {billing.deliveryFee === 0 ? "FREE" : `₹${billing.deliveryFee.toFixed(2)}`}
                 </span>
               </div>
-
-              <div className="flex justify-between items-center text-emerald-700">
-                <span className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Platform Fee</span>
-                </span>
-                <span className="font-bold font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">
-                  ₹0
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center text-emerald-700">
-                <span className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Service Fee</span>
-                </span>
-                <span className="font-bold font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">
-                  ₹0
-                </span>
-              </div>
-
-              {billing.discount > 0 && (
-                <div className="flex justify-between items-center text-emerald-700 font-bold">
-                  <span>Coupon Discount ({billing.appliedCoupon?.code})</span>
-                  <span className="font-mono">-₹{billing.discount}</span>
-                </div>
-              )}
 
               <div className="border-t-2 border-zinc-200 pt-3 flex justify-between items-center">
                 <div>
@@ -465,8 +383,18 @@ export default function CartSidebar({
                   <span className="text-[10px] text-zinc-400">Guaranteed final amount</span>
                 </div>
                 <span className="font-black text-2xl text-emerald-700 font-sans">
-                  ₹{billing.grandTotal}
+                  ₹{billing.grandTotal.toFixed(2)}
                 </span>
+              </div>
+
+              {/* Transparency Notice */}
+              <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-2.5 text-center mt-2">
+                <p className="text-[11px] text-emerald-900 font-bold">
+                  No platform fee. You see the complete price before ordering.
+                </p>
+                <p className="text-[10px] text-emerald-700 mt-0.5">
+                  Restaurant menu price + transparent GST + delivery
+                </p>
               </div>
             </div>
 

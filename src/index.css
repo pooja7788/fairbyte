@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -6,32 +6,33 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
-/* Base body styling */
+/* Base Pinterest warm body styling */
 body {
   font-family: var(--font-sans);
-  background-color: #fafafa;
-  color: #171717;
+  background-color: #faf7f2;
+  color: #1e261d;
   overflow-x: hidden;
 }
 
-/* Custom minimal scrollbar */
+/* Custom warm minimal scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f4f4f5;
+  background: #f4f0e6;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d4d4d8;
-  border-radius: 3px;
+  background: #d8d0be;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1aa;
+  background: #b5ac99;
 }
 
 /* Smooth motion utility wrapper */
 .smooth-scroll {
   scroll-behavior: smooth;
 }
+
 

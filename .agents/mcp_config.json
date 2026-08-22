@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "uber": {
+      "serverUrl": "https://mcp.uber.com/claude/rides-3p/mcp"
+    }
+  }
+}

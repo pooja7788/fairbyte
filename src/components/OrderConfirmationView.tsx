@@ -116,33 +116,40 @@ export default function OrderConfirmationView({
         {/* Transparent Bill Summary */}
         <div className="bg-zinc-50 rounded-2xl p-4 border border-zinc-200/80 space-y-2 text-xs">
           <div className="flex justify-between text-zinc-700">
-            <span>Food Total</span>
-            <span className="font-mono font-bold text-zinc-950">₹{order.billing.subtotal}</span>
+            <span>Food subtotal</span>
+            <span className="font-mono font-bold text-zinc-950">₹{order.billing.subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-zinc-700">
-            <span>Delivery Fee</span>
+            <span>CGST (2.5%)</span>
+            <span className="font-mono font-bold text-zinc-950">₹{order.billing.cgst.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-zinc-700">
+            <span>SGST (2.5%)</span>
+            <span className="font-mono font-bold text-zinc-950">₹{order.billing.sgst.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-emerald-700 font-bold">
+            <span>Platform fee</span>
+            <span className="font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">₹0.00</span>
+          </div>
+          <div className="flex justify-between text-zinc-700">
+            <span>Delivery</span>
             <span className="font-mono font-bold text-zinc-950">
-              {order.billing.deliveryFee === 0 ? "FREE" : `₹${order.billing.deliveryFee}`}
+              {order.billing.deliveryFee === 0 ? "FREE" : `₹${order.billing.deliveryFee.toFixed(2)}`}
             </span>
-          </div>
-          <div className="flex justify-between text-emerald-700 font-bold">
-            <span>Platform Fee</span>
-            <span className="font-mono">₹0 FREE</span>
-          </div>
-          <div className="flex justify-between text-emerald-700 font-bold">
-            <span>Service Fee</span>
-            <span className="font-mono">₹0 FREE</span>
           </div>
           {order.billing.discount > 0 && (
             <div className="flex justify-between text-emerald-700 font-bold">
               <span>Coupon Discount</span>
-              <span className="font-mono">-₹{order.billing.discount}</span>
+              <span className="font-mono">-₹{order.billing.discount.toFixed(2)}</span>
             </div>
           )}
           <div className="border-t border-zinc-200 pt-2 flex justify-between items-center text-sm font-black text-zinc-950">
-            <span>Final Paid Total</span>
-            <span className="text-base text-emerald-700 font-sans">₹{order.billing.grandTotal}</span>
+            <span>Total</span>
+            <span className="text-base text-emerald-700 font-sans">₹{order.billing.grandTotal.toFixed(2)}</span>
           </div>
+          <p className="text-[10px] text-zinc-400 text-center pt-1">
+            No platform fee. You see the complete price before ordering.
+          </p>
         </div>
 
         {/* Delivery Address */}

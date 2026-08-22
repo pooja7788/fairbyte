@@ -1,28 +1,30 @@
 import React from "react";
-import { Star, Clock, Bike, Heart, Leaf, ShieldCheck } from "lucide-react";
+import { Star, Clock, Bike, Leaf, ShieldCheck } from "lucide-react";
 import { Restaurant } from "../types";
 
 export interface RestaurantCardProps {
   key?: React.Key;
   restaurant: Restaurant;
   onClick: () => void;
-  isFavorite?: boolean;
-  onToggleFavorite?: (restaurantId: string, e?: React.MouseEvent) => void;
+  dynamicDeliveryFee?: number;
+  dynamicDistanceKm?: number;
 }
 
 export default function RestaurantCard({
   restaurant,
   onClick,
-  isFavorite = false,
-  onToggleFavorite
+  dynamicDeliveryFee,
+  dynamicDistanceKm
 }: RestaurantCardProps) {
+  const displayDeliveryFee = dynamicDeliveryFee !== undefined ? dynamicDeliveryFee : restaurant.deliveryFee;
+
   return (
     <div
       onClick={onClick}
-      className="cursor-pointer group bg-white rounded-3xl border border-zinc-200/80 hover:border-emerald-500/40 shadow-xs hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
+      className="cursor-pointer group bg-white rounded-[1.75rem] border border-[#eae3d5] hover:border-[#365229]/50 shadow-2xs hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
     >
       {/* Image Container */}
-      <div className="relative h-48 w-full overflow-hidden bg-zinc-100">
+      <div className="relative h-52 w-full overflow-hidden bg-[#f4f0e6]">
         <img
           src={restaurant.image}
           alt={restaurant.name}
@@ -31,80 +33,65 @@ export default function RestaurantCard({
         />
 
         {/* Gradient Overlay for bottom text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-
-        {/* Favorite Heart Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleFavorite?.(restaurant.id, e);
-          }}
-          className="cursor-pointer absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-zinc-700 hover:text-red-600 transition-colors shadow-sm active:scale-90"
-          title={isFavorite ? "Remove from favorites" : "Add to favorites"}
-        >
-          <Heart
-            className={`w-4 h-4 transition-colors ${
-              isFavorite ? "fill-red-500 text-red-500" : "text-zinc-600"
-            }`}
-          />
-        </button>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
 
         {/* Pure Veg Badge */}
         {restaurant.isPureVeg && (
-          <div className="absolute top-3 left-3 bg-emerald-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
-            <Leaf className="w-3 h-3" />
+          <div className="absolute top-3 left-3 bg-[#2d4023] text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
+            <Leaf className="w-3 h-3 text-[#bfe0b0]" />
             <span>Pure Veg</span>
           </div>
         )}
 
-        {/* Delivery & Price Range Overlay on Image bottom */}
-        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs font-bold">
-          <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10">
-            <Clock className="w-3.5 h-3.5 text-emerald-400" />
+        {/* Rating badge on top right */}
+        <div className="absolute top-3 right-3 flex items-center gap-1 bg-[#fbf9f4]/95 text-[#24351d] backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-black shadow-md border border-white/40">
+          <Star className="w-3.5 h-3.5 fill-[#eab308] text-[#eab308]" />
+          <span>{restaurant.rating}</span>
+        </div>
+
+        {/* Distance & Delivery Time Overlay on Image bottom */}
+        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-[11px] font-bold">
+          <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/15">
+            <Clock className="w-3 h-3 text-[#bde0ad]" />
             <span>{restaurant.deliveryTimeMin} mins</span>
           </div>
 
-          <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10">
-            <Bike className="w-3.5 h-3.5 text-emerald-400" />
-            <span>₹{restaurant.deliveryFee} delivery</span>
+          <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/15">
+            <Bike className="w-3 h-3 text-[#bde0ad]" />
+            <span>
+              {dynamicDistanceKm !== undefined ? `${dynamicDistanceKm} km away` : "Nearby"}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Info Body */}
       <div className="p-5 flex-grow flex flex-col justify-between space-y-3">
-        <div className="space-y-1.5">
-          
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-black text-zinc-950 text-base group-hover:text-emerald-700 transition-colors tracking-tight line-clamp-1">
-              {restaurant.name}
-            </h3>
-
-            {/* Rating pill */}
-            <div className="flex items-center gap-1 bg-emerald-50 text-emerald-900 border border-emerald-200/80 px-2 py-0.5 rounded-lg text-xs font-black shrink-0">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-              <span>{restaurant.rating}</span>
-            </div>
-          </div>
+        <div className="space-y-1">
+          <h3 className="font-black text-[#1c271b] text-base group-hover:text-[#365229] transition-colors tracking-tight line-clamp-1">
+            {restaurant.name}
+          </h3>
 
           {/* Cuisines */}
-          <p className="text-xs text-zinc-500 line-clamp-1">
+          <p className="text-xs text-[#63705f] line-clamp-1 font-medium">
             {restaurant.cuisine.join(" • ")}
           </p>
 
           {/* Tagline */}
-          <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
+          <p className="text-[11px] text-[#828f7f] line-clamp-2 leading-relaxed">
             {restaurant.tagline}
           </p>
         </div>
 
         {/* Bottom Menu Guarantee Tag */}
-        <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-500 font-medium">
-          <div className="flex items-center gap-1 text-emerald-700 font-bold">
-            <ShieldCheck className="w-3.5 h-3.5" />
+        <div className="pt-2.5 border-t border-[#f0eae0] flex items-center justify-between text-[11px] text-[#63705f] font-medium">
+          <div className="flex items-center gap-1 text-[#365229] font-bold">
+            <ShieldCheck className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>True Menu Price</span>
           </div>
-          <span className="font-mono font-bold text-zinc-700">{restaurant.priceRange}</span>
+          <span className="font-mono font-bold text-[#354332] bg-[#f4f0e8] px-2 py-0.5 rounded-md text-[10px]">
+            {restaurant.priceRange}
+          </span>
         </div>
 
       </div>

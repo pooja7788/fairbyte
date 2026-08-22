@@ -27,6 +27,8 @@ export interface Restaurant {
   bannerImage: string;
   address: string;
   categories: string[];
+  lat: number;
+  lng: number;
   featured?: boolean;
   isPureVeg?: boolean;
 }
@@ -49,15 +51,6 @@ export interface TraditionalComparison {
   savings: number;
 }
 
-export interface Coupon {
-  code: string;
-  title: string;
-  description: string;
-  discountType: "percentage" | "fixed" | "free_delivery";
-  discountValue: number;
-  minOrder: number;
-}
-
 export interface BillingBreakdown {
   subtotal: number;
   deliveryFee: number;
@@ -68,7 +61,6 @@ export interface BillingBreakdown {
   discount: number;
   grandTotal: number;
   distanceKm?: number;
-  appliedCoupon?: Coupon | null;
   traditionalComparison?: TraditionalComparison;
 }
 
@@ -85,18 +77,18 @@ export interface Address {
 
 export type OrderStatus =
   | "PLACED"
-  | "ACCEPTED"
-  | "PREPARING"
-  | "RIDER_ASSIGNED"
-  | "ON_THE_WAY"
-  | "DELIVERED"
-  | "CANCELLED"
-  | "PENDING_AUTH"
   | "AUTHORIZED"
   | "CONFIRMED"
+  | "ACCEPTED"
+  | "PREPARING"
+  | "READY_FOR_PICKUP"
+  | "RIDER_ASSIGNED"
+  | "OUT_FOR_DELIVERY"
   | "DELIVERING"
   | "ARRIVED"
+  | "DELIVERED"
   | "COMPLETED"
+  | "CANCELLED"
   | "CANCELLED_REJECTED"
   | "CANCELLED_TIMED_OUT";
 
@@ -188,7 +180,6 @@ export type AppView =
   | "orders"
   | "profile"
   | "addresses"
-  | "favorites"
+  | "admin"
   | "help"
-  | "offers"
   | "about";

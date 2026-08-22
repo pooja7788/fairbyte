@@ -13,9 +13,6 @@ interface SearchViewProps {
   onOpenRestaurant: (restaurant: Restaurant) => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
-  favorites: string[];
-  onToggleFavoriteRestaurant: (id: string) => void;
-  onToggleFavoriteItem: (id: string) => void;
 }
 
 const POPULAR_SEARCHES = [
@@ -37,10 +34,7 @@ export default function SearchView({
   onRemoveFromCart,
   onOpenRestaurant,
   searchQuery,
-  onSearchChange,
-  favorites,
-  onToggleFavoriteRestaurant,
-  onToggleFavoriteItem
+  onSearchChange
 }: SearchViewProps) {
   const [activeTab, setActiveTab] = useState<"all" | "dishes" | "restaurants">("all");
   const [onlyVeg, setOnlyVeg] = useState(false);
@@ -221,8 +215,6 @@ export default function SearchView({
                     key={restaurant.id}
                     restaurant={restaurant}
                     onClick={() => onOpenRestaurant(restaurant)}
-                    isFavorite={favorites.includes(restaurant.id)}
-                    onToggleFavorite={() => onToggleFavoriteRestaurant(restaurant.id)}
                   />
                 ))}
               </div>
@@ -244,7 +236,6 @@ export default function SearchView({
                   const rest = restaurants.find(r => r.id === item.restaurantId) || restaurants[0];
                   const cartEntry = cart.find(c => c.item.id === item.id);
                   const quantity = cartEntry ? cartEntry.quantity : 0;
-                  const isItemFav = favorites.includes(item.id);
 
                   return (
                     <FoodCard
@@ -254,8 +245,6 @@ export default function SearchView({
                       quantityInCart={quantity}
                       onAddToCart={onAddToCart}
                       onRemoveFromCart={onRemoveFromCart}
-                      isFavorite={isItemFav}
-                      onToggleFavorite={() => onToggleFavoriteItem(item.id)}
                     />
                   );
                 })}

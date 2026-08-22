@@ -8,13 +8,11 @@ import {
   TrendingDown, 
   ShieldCheck, 
   Bike, 
-  Heart,
-  ChevronRight,
-  ArrowRight,
-  Clock,
-  Compass,
-  UtensilsCrossed,
-  Tag
+  ChevronRight, 
+  ArrowRight, 
+  Clock, 
+  Compass, 
+  UtensilsCrossed
 } from "lucide-react";
 
 import { 
@@ -23,11 +21,11 @@ import {
   CartItem, 
   BillingBreakdown, 
   Address, 
-  Order,
-  UserProfile,
-  AppNotification,
-  AppView,
-  Coupon
+  Order, 
+  OrderStatus,
+  UserProfile, 
+  AppNotification, 
+  AppView 
 } from "./types";
 
 import { 
@@ -38,7 +36,8 @@ import {
   MOCK_USER,
   MOCK_PAST_ORDERS,
   MOCK_NOTIFICATIONS,
-  computeBilling 
+  computeBilling,
+  calculateDynamicDeliveryFee
 } from "./mockData";
 
 import Navbar from "./components/Navbar";
@@ -55,16 +54,18 @@ import DeliveryTrackingView from "./components/DeliveryTrackingView";
 import OrdersView from "./components/OrdersView";
 import ProfileView from "./components/ProfileView";
 import HelpSupportView from "./components/HelpSupportView";
-import OffersView from "./components/OffersView";
+import AdminDashboardView from "./components/AdminDashboardView";
+import FairBytePromiseSection from "./components/FairBytePromiseSection";
 import AuthModal from "./components/AuthModal";
 import AddressModal from "./components/AddressModal";
 import NotificationsModal from "./components/NotificationsModal";
+import { saveOrderToSupabase, saveAddressToSupabase, checkSupabaseConnection } from "./lib/supabase";
 
 export default function App() {
   // Navigation View State
   const [currentView, setCurrentView] = useState<AppView>("home");
   
-  // User & Auth State (Default logged in user Pooja Bhusani, supports guest mode)
+  // User & Auth State
   const [user, setUser] = useState<UserProfile>(MOCK_USER);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
@@ -73,19 +74,18 @@ export default function App() {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(MOCK_ADDRESSES[0]);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
 
-  // Cart & Coupon State
-  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
+  // Menu Inventory State (Synchronized between Admin and Customer views)
+  const [menuItems, setMenuItems] = useState<FoodItem[]>(MOCK_MENU_ITEMS);
+
+  // Cart State
+  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(MOCK_RESTAURANTS[0]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [activeCoupon, setActiveCoupon] = useState<Coupon | null>(null);
 
-  // Orders State
+  // Orders State (Shared between Customer and Admin)
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
   const [pastOrders, setPastOrders] = useState<Order[]>(MOCK_PAST_ORDERS);
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
-
-  // Favorites System (IDs of restaurants and items)
-  const [favorites, setFavorites] = useState<string[]>(["rest-spice-route", "sr-1", "rest-dosa-district"]);
 
   // Notifications
   const [notifications, setNotifications] = useState<AppNotification[]>(MOCK_NOTIFICATIONS);
@@ -94,6 +94,7 @@ export default function App() {
   // Global Home Search & Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCuisineFilter, setSelectedCuisineFilter] = useState("All");
+  const [selectedDistanceFilter, setSelectedDistanceFilter] = useState<"all" | "near" | "far">("all");
   const [onlyVegFilter, setOnlyVegFilter] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -105,13 +106,22 @@ export default function App() {
     }, 2800);
   };
 
-  // Dynamic Billing Breakdown computation
+  // Dynamic Location Delivery Fee: Calculates distance between Restaurant & User Address
+  const dynamicDelivery = useMemo(() => {
+    const rest = selectedRestaurant || MOCK_RESTAURANTS[0];
+    const addr = selectedAddress || MOCK_ADDRESSES[0];
+    if (rest && addr) {
+      return calculateDynamicDeliveryFee(rest.lat, rest.lng, addr.lat, addr.lng);
+    }
+    return { fee: 35, distanceKm: 1.5 };
+  }, [selectedRestaurant, selectedAddress]);
+
+  // Dynamic Billing Breakdown computation (Food + 2.5% CGST + 2.5% SGST + ₹0 Platform Fee + Dynamic Delivery)
   const billing: BillingBreakdown | null = useMemo(() => {
     if (cart.length === 0) return null;
     const subtotal = cart.reduce((acc, c) => acc + c.item.price * c.quantity, 0);
-    const deliveryFee = selectedRestaurant?.deliveryFee || 48;
-    return computeBilling(subtotal, deliveryFee, activeCoupon);
-  }, [cart, selectedRestaurant, activeCoupon]);
+    return computeBilling(subtotal, dynamicDelivery.fee, dynamicDelivery.distanceKm);
+  }, [cart, dynamicDelivery]);
 
   // Cart Actions
   const handleAddToCart = (item: FoodItem, restaurant: Restaurant) => {
@@ -140,33 +150,7 @@ export default function App() {
 
   const handleClearCart = () => {
     setCart([]);
-    setActiveCoupon(null);
     showToast("Cart cleared");
-  };
-
-  // Favorites Toggles
-  const handleToggleFavoriteRestaurant = (restaurantId: string) => {
-    setFavorites(prev => {
-      if (prev.includes(restaurantId)) {
-        showToast("Removed from favorites");
-        return prev.filter(id => id !== restaurantId);
-      } else {
-        showToast("Added to favorites ❤️");
-        return [...prev, restaurantId];
-      }
-    });
-  };
-
-  const handleToggleFavoriteItem = (itemId: string) => {
-    setFavorites(prev => {
-      if (prev.includes(itemId)) {
-        showToast("Removed dish from favorites");
-        return prev.filter(id => id !== itemId);
-      } else {
-        showToast("Added dish to favorites ❤️");
-        return [...prev, itemId];
-      }
-    });
   };
 
   // Open a specific restaurant page
@@ -190,7 +174,8 @@ export default function App() {
     };
     setAddresses(prev => [...prev, created]);
     setSelectedAddress(created);
-    showToast(`Address "${newAddr.label}" saved`);
+    saveAddressToSupabase(created);
+    showToast(`Address "${newAddr.label}" saved • Delivery updated`);
   };
 
   const handleDeleteAddress = (id: string) => {
@@ -227,7 +212,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Place Order Simulation
+  // Place Order Simulation: Directly routes straight to Live Tracking, syncs with Supabase & redirects to Uber
   const handlePlaceOrder = (paymentMethod: string) => {
     if (!billing || !selectedAddress || cart.length === 0) return;
 
@@ -235,8 +220,15 @@ export default function App() {
 
     setTimeout(() => {
       const rest = selectedRestaurant || MOCK_RESTAURANTS[0];
+      const randomId = "FB-" + Math.floor(1000 + Math.random() * 9000);
+      
+      // Uber Deep Link with Pickup (Restaurant) and Dropoff (Customer Address)
+      const pickupName = encodeURIComponent(rest.name);
+      const dropoffName = encodeURIComponent(selectedAddress.text || selectedAddress.label);
+      const uberRedirectUrl = `https://m.uber.com/ul/?action=setPickup&client_id=fairbyte&pickup[latitude]=${rest.lat}&pickup[longitude]=${rest.lng}&pickup[nickname]=${pickupName}&dropoff[latitude]=${selectedAddress.lat}&dropoff[longitude]=${selectedAddress.lng}&dropoff[nickname]=${dropoffName}`;
+
       const newOrder: Order = {
-        id: "FB-2048",
+        id: randomId,
         restaurantId: rest.id,
         restaurantName: rest.name,
         restaurantImage: rest.image,
@@ -246,20 +238,28 @@ export default function App() {
         address: selectedAddress,
         deliveryPartner: MOCK_DELIVERY_PARTNER,
         createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        estimatedDeliveryMin: "30–35 min",
+        estimatedDeliveryMin: "25–30 min",
         paymentMethod,
         paymentStatus: "PAID",
-        orderTimelineStep: 1
+        orderTimelineStep: 0
       };
 
       setActiveOrder(newOrder);
       setPastOrders(prev => [newOrder, ...prev]);
+      saveOrderToSupabase(newOrder);
       setIsProcessingCheckout(false);
       setCart([]);
-      setActiveCoupon(null);
-      navigateTo("confirmation");
-      showToast("Order placed successfully at true menu price!");
-    }, 1000);
+      navigateTo("tracking");
+      
+      // Open Uber with pickup and dropoff preloaded
+      try {
+        window.open(uberRedirectUrl, "_blank");
+      } catch (e) {
+        console.warn("Popup blocked or direct redirect:", e);
+      }
+
+      showToast(`Order ${randomId} placed! Redirecting to Uber...`);
+    }, 600);
   };
 
   // Reorder action
@@ -271,34 +271,68 @@ export default function App() {
     showToast(`Loaded ${order.items.length} items from ${order.restaurantName} to cart`);
   };
 
-  // Filtered Restaurant Discovery List for Home
+  // Admin Order Status Update
+  const handleUpdateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
+    setPastOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    if (activeOrder && activeOrder.id === orderId) {
+      setActiveOrder(prev => prev ? { ...prev, status: newStatus } : null);
+    }
+    showToast(`Order ${orderId} updated to: ${newStatus}`);
+  };
+
+  // Admin Toggle Menu Stock
+  const handleToggleItemStock = (itemId: string, inStock: boolean) => {
+    setMenuItems(prev => prev.map(i => i.id === itemId ? { ...i, isAvailable: inStock } : i));
+    showToast(`Item stock status updated`);
+  };
+
+  // Filtered Restaurant Discovery List for Home with Dynamic Distance Calculation
   const filteredRestaurants = useMemo(() => {
-    return MOCK_RESTAURANTS.filter((r) => {
-      const matchesSearch = 
-        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.tagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.cuisine.some(c => c.toLowerCase().includes(searchQuery.toLowerCase()));
+    return MOCK_RESTAURANTS
+      .map((r) => {
+        const distCalc = selectedAddress 
+          ? calculateDynamicDeliveryFee(r.lat, r.lng, selectedAddress.lat, selectedAddress.lng)
+          : { fee: r.deliveryFee, distanceKm: 2.0 };
+        return {
+          ...r,
+          currentDistanceKm: distCalc.distanceKm,
+          currentDeliveryFee: distCalc.fee
+        };
+      })
+      .filter((r) => {
+        const matchesSearch = 
+          r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          r.tagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          r.cuisine.some(c => c.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      let matchesCuisine = true;
-      if (selectedCuisineFilter !== "All") {
-        matchesCuisine = r.cuisine.some(c => c.toLowerCase() === selectedCuisineFilter.toLowerCase());
-      }
+        let matchesCuisine = true;
+        if (selectedCuisineFilter !== "All") {
+          matchesCuisine = r.cuisine.some(c => c.toLowerCase() === selectedCuisineFilter.toLowerCase());
+        }
 
-      let matchesVeg = true;
-      if (onlyVegFilter) {
-        matchesVeg = r.isPureVeg === true;
-      }
+        let matchesVeg = true;
+        if (onlyVegFilter) {
+          matchesVeg = r.isPureVeg === true;
+        }
 
-      return matchesSearch && matchesCuisine && matchesVeg;
-    });
-  }, [searchQuery, selectedCuisineFilter, onlyVegFilter]);
+        let matchesDistance = true;
+        if (selectedDistanceFilter === "near") {
+          matchesDistance = r.currentDistanceKm <= 3.0;
+        } else if (selectedDistanceFilter === "far") {
+          matchesDistance = r.currentDistanceKm > 3.0;
+        }
+
+        return matchesSearch && matchesCuisine && matchesVeg && matchesDistance;
+      })
+      .sort((a, b) => a.currentDistanceKm - b.currentDistanceKm);
+  }, [searchQuery, selectedCuisineFilter, onlyVegFilter, selectedDistanceFilter, selectedAddress]);
 
   const totalCartCount = cart.reduce((acc, c) => acc + c.quantity, 0);
   const totalCartAmount = billing ? billing.grandTotal : 0;
   const unreadNotifCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fafafa] text-zinc-900 font-sans antialiased">
+    <div className="min-h-screen flex flex-col bg-[#faf7f2] text-[#1c271b] font-sans antialiased">
       
       {/* Toast Notification */}
       <AnimatePresence>
@@ -307,9 +341,9 @@ export default function App() {
             initial={{ opacity: 0, y: -20, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
             exit={{ opacity: 0, y: -20, x: "-50%" }}
-            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-zinc-950 text-white border border-emerald-500/40 px-5 py-2.5 rounded-full text-xs font-bold shadow-2xl flex items-center gap-2 backdrop-blur-md"
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#22351c] text-white border border-[#3f5d30] px-5 py-2.5 rounded-full text-xs font-bold shadow-2xl flex items-center gap-2 backdrop-blur-md"
           >
-            <Sparkles className="w-4 h-4 text-emerald-400" />
+            <Sparkles className="w-4 h-4 text-[#bfe0b0]" />
             <span>{toastMessage}</span>
           </motion.div>
         )}
@@ -327,20 +361,22 @@ export default function App() {
         cartTotal={totalCartAmount}
         addresses={addresses}
         selectedAddress={selectedAddress}
-        onSelectAddress={setSelectedAddress}
+        onSelectAddress={(addr) => {
+          setSelectedAddress(addr);
+          showToast(`Delivering to ${addr.label} • Delivery fee recalculated`);
+        }}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         user={user}
         unreadNotificationsCount={unreadNotifCount}
-        favoritesCount={favorites.length}
       />
 
       {/* Main Container */}
-      <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* VIEW 1: HOME PAGE */}
         {currentView === "home" && (
-          <div className="space-y-10">
+          <div className="space-y-12">
             
             {/* Hero Section */}
             <HeroSection
@@ -348,92 +384,136 @@ export default function App() {
                 const el = document.getElementById("restaurants-discovery-section");
                 el?.scrollIntoView({ behavior: "smooth" });
               }}
-              onOffersClick={() => navigateTo("offers")}
               onHowItWorksClick={() => navigateTo("help")}
             />
 
             {/* RESTAURANT DISCOVERY SECTION */}
             <section id="restaurants-discovery-section" className="space-y-6 pt-2">
               
-              {/* Section Header with Filters */}
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-zinc-200/80 pb-5">
-                <div className="space-y-1">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold">
-                    <Compass className="w-3.5 h-3.5" />
+              {/* Section Header with Filters (Pinterest reference) */}
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#e8e2d5] pb-5">
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#e8efe4] border border-[#d2e2ca] text-[#2b3e21] text-xs font-black">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#365229] stroke-[2.5]" />
                     <span>VERIFIED RESTAURANT PRICES</span>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-black text-zinc-950 tracking-tight font-sans">
+                  <h2 className="text-3xl sm:text-4xl font-black text-[#1c271b] tracking-tight font-sans">
                     Explore Partner Restaurants
                   </h2>
-                  <p className="text-xs sm:text-sm text-zinc-500 font-normal">
-                    Direct menu pricing guaranteed. Browse top rated local kitchens in Bengaluru.
+                  <p className="text-xs sm:text-sm text-[#616e5c] font-medium">
+                    Direct menu pricing • Transparent location delivery • No hidden costs
                   </p>
                 </div>
 
-                {/* Cuisine & Veg Filters */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={() => setOnlyVegFilter(!onlyVegFilter)}
-                    className={`cursor-pointer px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 border transition-all ${
-                      onlyVegFilter
-                        ? "bg-emerald-600 text-white border-emerald-700 shadow-xs"
-                        : "bg-white text-emerald-800 border-emerald-300 hover:bg-emerald-50"
-                    }`}
-                  >
-                    <Leaf className="w-3.5 h-3.5" />
-                    <span>Pure Veg Only</span>
-                  </button>
-
-                  {["All", "North Indian", "South Indian", "Biryani", "Burgers", "Healthy"].map((cuisine) => (
+                {/* Distance & Cuisine Filters */}
+                <div className="flex flex-col gap-2.5">
+                  
+                  {/* Distance Pills: Near Me vs Far */}
+                  <div className="flex items-center gap-1.5 bg-[#ede6db]/60 p-1 rounded-full border border-[#ded5c5] self-start md:self-end">
                     <button
-                      key={cuisine}
-                      onClick={() => setSelectedCuisineFilter(cuisine)}
-                      className={`cursor-pointer px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                        selectedCuisineFilter === cuisine
-                          ? "bg-zinc-950 text-white shadow-xs"
-                          : "bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-100"
+                      onClick={() => setSelectedDistanceFilter("all")}
+                      className={`cursor-pointer px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all ${
+                        selectedDistanceFilter === "all"
+                          ? "bg-[#2d4023] text-white shadow-xs"
+                          : "text-[#4a5745] hover:text-[#1c271b]"
                       }`}
                     >
-                      {cuisine}
+                      All ({MOCK_RESTAURANTS.length})
                     </button>
-                  ))}
+                    <button
+                      onClick={() => setSelectedDistanceFilter("near")}
+                      className={`cursor-pointer px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all flex items-center gap-1 ${
+                        selectedDistanceFilter === "near"
+                          ? "bg-[#2d4023] text-white shadow-xs"
+                          : "text-[#4a5745] hover:text-[#1c271b]"
+                      }`}
+                    >
+                      <span>⚡ Near Me (≤ 3 km)</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedDistanceFilter("far")}
+                      className={`cursor-pointer px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all flex items-center gap-1 ${
+                        selectedDistanceFilter === "far"
+                          ? "bg-[#2d4023] text-white shadow-xs"
+                          : "text-[#4a5745] hover:text-[#1c271b]"
+                      }`}
+                    >
+                      <span>🚗 Farther Away (&gt; 3 km)</span>
+                    </button>
+                  </div>
+
+                  {/* Cuisine & Veg Filters */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => setOnlyVegFilter(!onlyVegFilter)}
+                      className={`cursor-pointer px-4 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 border transition-all ${
+                        onlyVegFilter
+                          ? "bg-[#2d4023] text-white border-[#2d4023] shadow-xs"
+                          : "bg-white text-[#2c3e22] border-[#d8d0c2] hover:bg-[#f6f2e8]"
+                      }`}
+                    >
+                      <Leaf className="w-3.5 h-3.5 text-[#3f5e30]" />
+                      <span>Pure Veg Only</span>
+                    </button>
+
+                    {["All", "North Indian", "South Indian", "Biryani", "Burgers", "Healthy"].map((cuisine) => (
+                      <button
+                        key={cuisine}
+                        onClick={() => setSelectedCuisineFilter(cuisine)}
+                        className={`cursor-pointer px-4 py-2 rounded-full text-xs font-extrabold transition-all ${
+                          selectedCuisineFilter === cuisine
+                            ? "bg-[#2d4023] text-white shadow-md shadow-[#2d4023]/20"
+                            : "bg-white border border-[#ded5c5] text-[#334230] hover:bg-[#f6f2e8]"
+                        }`}
+                      >
+                        {cuisine}
+                      </button>
+                    ))}
+                  </div>
+
                 </div>
               </div>
 
               {/* Restaurant Cards Grid */}
               {filteredRestaurants.length === 0 ? (
-                <div className="bg-white border border-zinc-200/80 rounded-3xl p-12 text-center space-y-3">
+                <div className="bg-white border border-[#ede6db] rounded-[2rem] p-12 text-center space-y-3">
                   <span className="text-4xl">🔍</span>
-                  <h3 className="font-extrabold text-base text-zinc-900">No restaurants match your filter</h3>
-                  <p className="text-xs text-zinc-500">
-                    Try clearing your search query or selecting "All" cuisines.
+                  <h3 className="font-extrabold text-base text-[#1c271b]">No restaurants match your location filter</h3>
+                  <p className="text-xs text-[#63705f]">
+                    Try switching to "All Distances" or clearing cuisine filters.
                   </p>
                   <button
                     onClick={() => {
                       setSearchQuery("");
                       setSelectedCuisineFilter("All");
+                      setSelectedDistanceFilter("all");
                       setOnlyVegFilter(false);
                     }}
-                    className="cursor-pointer text-xs font-bold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200 mt-2"
+                    className="cursor-pointer text-xs font-bold text-[#2d4023] bg-[#edf4e8] px-4 py-2 rounded-xl border border-[#d2e2ca] mt-2"
                   >
-                    Clear Filters
+                    Reset All Filters
                   </button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                  {filteredRestaurants.map((restaurant) => (
-                    <RestaurantCard
-                      key={restaurant.id}
-                      restaurant={restaurant}
-                      onClick={() => handleOpenRestaurant(restaurant)}
-                      isFavorite={favorites.includes(restaurant.id)}
-                      onToggleFavorite={handleToggleFavoriteRestaurant}
-                    />
-                  ))}
+                  {filteredRestaurants.map((restaurant) => {
+                    return (
+                      <RestaurantCard
+                        key={restaurant.id}
+                        restaurant={restaurant}
+                        onClick={() => handleOpenRestaurant(restaurant)}
+                        dynamicDeliveryFee={restaurant.currentDeliveryFee}
+                        dynamicDistanceKm={restaurant.currentDistanceKm}
+                      />
+                    );
+                  })}
                 </div>
               )}
 
             </section>
+
+            {/* The FairByte Promise Section at the End of the Website */}
+            <FairBytePromiseSection />
 
           </div>
         )}
@@ -442,16 +522,13 @@ export default function App() {
         {currentView === "search" && (
           <SearchView
             restaurants={MOCK_RESTAURANTS}
-            menuItems={MOCK_MENU_ITEMS}
+            menuItems={menuItems}
             cart={cart}
             onAddToCart={handleAddToCart}
             onRemoveFromCart={handleRemoveFromCart}
             onOpenRestaurant={handleOpenRestaurant}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            favorites={favorites}
-            onToggleFavoriteRestaurant={handleToggleFavoriteRestaurant}
-            onToggleFavoriteItem={handleToggleFavoriteItem}
           />
         )}
 
@@ -459,15 +536,14 @@ export default function App() {
         {currentView === "restaurant" && selectedRestaurant && (
           <RestaurantDetailView
             restaurant={selectedRestaurant}
-            menuItems={MOCK_MENU_ITEMS}
+            menuItems={menuItems}
             cart={cart}
             onAddToCart={handleAddToCart}
             onRemoveFromCart={handleRemoveFromCart}
             onBack={() => navigateTo("home")}
             onOpenCart={() => setIsCartOpen(true)}
-            favorites={favorites}
-            onToggleFavoriteRestaurant={handleToggleFavoriteRestaurant}
-            onToggleFavoriteItem={handleToggleFavoriteItem}
+            dynamicDeliveryFee={dynamicDelivery.fee}
+            dynamicDistanceKm={dynamicDelivery.distanceKm}
           />
         )}
 
@@ -484,7 +560,6 @@ export default function App() {
             onClear={handleClearCart}
             onProceed={() => navigateTo("checkout")}
             onBackToShopping={() => navigateTo("home")}
-            onApplyCoupon={setActiveCoupon}
           />
         )}
 
@@ -494,7 +569,10 @@ export default function App() {
             cartItems={cart}
             addresses={addresses}
             selectedAddress={selectedAddress}
-            setSelectedAddress={setSelectedAddress}
+            setSelectedAddress={(addr) => {
+              setSelectedAddress(addr);
+              showToast(`Selected ${addr.label} • Delivery fee recalculated`);
+            }}
             billing={billing}
             onOpenAddAddress={() => setIsAddressModalOpen(true)}
             onPlaceOrder={handlePlaceOrder}
@@ -517,12 +595,25 @@ export default function App() {
         )}
 
         {/* VIEW 7: DELIVERY TRACKING PAGE */}
-        {currentView === "tracking" && activeOrder && (
-          <DeliveryTrackingView
-            order={activeOrder}
-            onBackToHome={() => navigateTo("home")}
-            onBackToOrders={() => navigateTo("orders")}
-          />
+        {currentView === "tracking" && (
+          activeOrder ? (
+            <DeliveryTrackingView
+              order={activeOrder}
+              onBackToHome={() => navigateTo("home")}
+              onBackToOrders={() => navigateTo("orders")}
+            />
+          ) : (
+            <div className="max-w-md mx-auto py-16 text-center space-y-4">
+              <h3 className="font-extrabold text-base text-zinc-900">No active delivery in transit</h3>
+              <p className="text-xs text-zinc-500">View your past completed orders or start a new order.</p>
+              <button
+                onClick={() => navigateTo("orders")}
+                className="cursor-pointer bg-emerald-600 text-zinc-950 font-bold px-5 py-2.5 rounded-2xl text-xs"
+              >
+                View Orders History
+              </button>
+            </div>
+          )
         )}
 
         {/* VIEW 8: ORDERS HISTORY PAGE */}
@@ -536,8 +627,26 @@ export default function App() {
           />
         )}
 
-        {/* VIEW 9: PROFILE / ACCOUNT HUB */}
-        {(currentView === "profile" || currentView === "addresses" || currentView === "favorites") && (
+        {/* VIEW 9: ADMIN & KITCHEN DASHBOARD */}
+        {currentView === "admin" && (
+          <AdminDashboardView
+            orders={pastOrders}
+            menuItems={menuItems}
+            restaurants={MOCK_RESTAURANTS}
+            onUpdateOrderStatus={handleUpdateOrderStatus}
+            onToggleItemStock={handleToggleItemStock}
+            onNavigateToTracking={(id) => {
+              const match = pastOrders.find(o => o.id === id);
+              if (match) {
+                setActiveOrder(match);
+                navigateTo("tracking");
+              }
+            }}
+          />
+        )}
+
+        {/* VIEW 10: PROFILE / ACCOUNT HUB */}
+        {(currentView === "profile" || currentView === "addresses") && (
           <ProfileView
             user={user}
             onUpdateUser={setUser}
@@ -549,29 +658,16 @@ export default function App() {
             onOpenAddAddress={() => setIsAddressModalOpen(true)}
             onDeleteAddress={handleDeleteAddress}
             onSetDefaultAddress={handleSetDefaultAddress}
-            favorites={favorites}
             restaurants={MOCK_RESTAURANTS}
-            menuItems={MOCK_MENU_ITEMS}
+            menuItems={menuItems}
             onOpenRestaurant={handleOpenRestaurant}
             onNavigate={navigateTo}
           />
         )}
 
-        {/* VIEW 10: HELP & SUPPORT */}
+        {/* VIEW 11: HELP & SUPPORT */}
         {currentView === "help" && (
           <HelpSupportView />
-        )}
-
-        {/* VIEW 11: OFFERS & PROMOTIONS */}
-        {currentView === "offers" && (
-          <OffersView
-            onApplyCouponAndOrder={(coupon) => {
-              setActiveCoupon(coupon);
-              showToast(`Applied ${coupon.code}! Now choose your dishes.`);
-              navigateTo("home");
-            }}
-            onBrowseRestaurants={() => navigateTo("home")}
-          />
         )}
 
       </main>
@@ -594,7 +690,6 @@ export default function App() {
               setIsCartOpen(false);
               navigateTo("checkout");
             }}
-            onApplyCoupon={setActiveCoupon}
           />
         )}
       </AnimatePresence>
@@ -695,8 +790,8 @@ export default function App() {
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => navigateTo("offers")} className="cursor-pointer hover:text-emerald-400 transition-colors">
-                    Promo Offers & Deals
+                  <button onClick={() => navigateTo("admin")} className="cursor-pointer hover:text-emerald-400 transition-colors">
+                    Admin & Kitchen Dashboard
                   </button>
                 </li>
                 <li>
@@ -710,10 +805,10 @@ export default function App() {
             <div className="space-y-2 text-xs">
               <span className="font-bold text-white uppercase tracking-wider block">Hackathon MVP</span>
               <p className="text-zinc-500 leading-relaxed text-[11px]">
-                Built as a high-fidelity frontend prototype. Demonstrates complete order-to-tracking flow with realistic mock data and real-time delivery telemetry.
+                Built as a high-fidelity logistics prototype. Demonstrates complete order-to-tracking flow with distance-based courier dispatch and real-time store synchronization.
               </p>
               <div className="pt-2 text-[10px] text-zinc-500 font-mono">
-                FairByte v1.0.0 • Bengaluru, India
+                FairByte v2.0.0 • Bengaluru, India
               </div>
             </div>
 

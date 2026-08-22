@@ -29,7 +29,6 @@ interface ProfileViewProps {
   onOpenAddAddress: () => void;
   onDeleteAddress: (id: string) => void;
   onSetDefaultAddress: (id: string) => void;
-  favorites: string[];
   restaurants: Restaurant[];
   menuItems: FoodItem[];
   onOpenRestaurant: (r: Restaurant) => void;
@@ -44,20 +43,16 @@ export default function ProfileView({
   onOpenAddAddress,
   onDeleteAddress,
   onSetDefaultAddress,
-  favorites,
   restaurants,
   menuItems,
   onOpenRestaurant,
   onNavigate
 }: ProfileViewProps) {
-  const [activeTab, setActiveTab] = useState<"account" | "addresses" | "favorites" | "payments" | "about">("account");
+  const [activeTab, setActiveTab] = useState<"account" | "addresses" | "payments" | "about">("account");
   const [isEditing, setIsEditing] = useState(false);
   const [nameInput, setNameInput] = useState(user.name);
   const [emailInput, setEmailInput] = useState(user.email);
   const [phoneInput, setPhoneInput] = useState(user.phone);
-
-  const favoriteRestaurants = restaurants.filter(r => favorites.includes(r.id));
-  const favoriteDishes = menuItems.filter(i => favorites.includes(i.id));
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,7 +119,6 @@ export default function ProfileView({
         {[
           { id: "account", label: "My Account", icon: User },
           { id: "addresses", label: `Addresses (${addresses.length})`, icon: MapPin },
-          { id: "favorites", label: `Favorites (${favorites.length})`, icon: Heart },
           { id: "payments", label: "Payments", icon: CreditCard },
           { id: "about", label: "About FairByte", icon: ShieldCheck }
         ].map((tab) => {
@@ -252,13 +246,13 @@ export default function ProfileView({
             </button>
 
             <button
-              onClick={() => onNavigate("offers")}
+              onClick={() => onNavigate("admin")}
               className="cursor-pointer p-4 bg-zinc-50 hover:bg-emerald-50 rounded-2xl border border-zinc-200/80 text-left transition-colors flex items-center justify-between"
             >
               <div>
                 <ShieldCheck className="w-5 h-5 text-emerald-600 mb-1" />
-                <span className="font-extrabold text-xs text-zinc-900 block">Active Offers</span>
-                <span className="text-[10px] text-zinc-500">Promo codes & deals</span>
+                <span className="font-extrabold text-xs text-zinc-900 block">Kitchen Admin Panel</span>
+                <span className="text-[10px] text-zinc-500">Live Kanban & Menu stock</span>
               </div>
               <ArrowRight className="w-4 h-4 text-zinc-400" />
             </button>
@@ -331,95 +325,6 @@ export default function ProfileView({
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* TAB: FAVORITES */}
-      {activeTab === "favorites" && (
-        <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-8 shadow-sm space-y-6">
-          <div className="border-b border-zinc-100 pb-3">
-            <h3 className="font-black text-base text-zinc-950 font-sans">
-              Your Favorite Restaurants & Dishes
-            </h3>
-            <p className="text-xs text-zinc-500">Quickly reorder your curated choices</p>
-          </div>
-
-          {favorites.length === 0 ? (
-            <div className="py-12 text-center space-y-3">
-              <Heart className="w-12 h-12 text-zinc-300 mx-auto" />
-              <h4 className="font-extrabold text-sm text-zinc-800">No favorites saved yet</h4>
-              <p className="text-xs text-zinc-500">
-                Click the heart icon on any restaurant or dish to save it here.
-              </p>
-              <button
-                onClick={() => onNavigate("home")}
-                className="cursor-pointer text-xs font-bold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200 mt-2"
-              >
-                Browse Restaurants
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {favoriteRestaurants.length > 0 && (
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                    Favorite Kitchens ({favoriteRestaurants.length})
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {favoriteRestaurants.map(r => (
-                      <div
-                        key={r.id}
-                        onClick={() => onOpenRestaurant(r)}
-                        className="cursor-pointer bg-zinc-50 hover:bg-emerald-50/50 p-3.5 rounded-2xl border border-zinc-200 flex items-center justify-between transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <img src={r.image} alt={r.name} className="w-12 h-12 rounded-xl object-cover" />
-                          <div>
-                            <p className="font-extrabold text-xs text-zinc-900">{r.name}</p>
-                            <p className="text-[11px] text-zinc-500">{r.cuisine.slice(0, 2).join(", ")}</p>
-                          </div>
-                        </div>
-                        <ArrowRight className="w-4 h-4 text-zinc-400" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {favoriteDishes.length > 0 && (
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                    Favorite Dishes ({favoriteDishes.length})
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {favoriteDishes.map(i => (
-                      <div
-                        key={i.id}
-                        className="bg-zinc-50 p-3.5 rounded-2xl border border-zinc-200 flex items-center justify-between"
-                      >
-                        <div className="flex items-center gap-3">
-                          <img src={i.image} alt={i.title} className="w-12 h-12 rounded-xl object-cover" />
-                          <div>
-                            <p className="font-extrabold text-xs text-zinc-900">{i.title}</p>
-                            <p className="text-[11px] font-mono text-zinc-600 font-bold">₹{i.price}</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            const rest = restaurants.find(r => r.id === i.restaurantId);
-                            if (rest) onOpenRestaurant(rest);
-                          }}
-                          className="cursor-pointer text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200"
-                        >
-                          View Menu
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
 

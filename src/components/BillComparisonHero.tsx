@@ -30,12 +30,13 @@ export default function BillComparisonHero({ onExploreClick }: BillComparisonHer
 
   // Calculate FairByte
   const fairByteFood = orderAmount;
+  const fairByteCGST = Math.round((orderAmount * 0.025) * 100) / 100;
+  const fairByteSGST = Math.round((orderAmount * 0.025) * 100) / 100;
   const fairByteDelivery = 48;
   const fairBytePlatformFee = 0;
-  const fairByteServiceFee = 0;
-  const fairByteTotal = fairByteFood + fairByteDelivery + fairBytePlatformFee + fairByteServiceFee;
+  const fairByteTotal = Math.round((fairByteFood + fairByteCGST + fairByteSGST + fairByteDelivery + fairBytePlatformFee) * 100) / 100;
 
-  const savings = traditionalTotal - fairByteTotal;
+  const savings = Math.round((traditionalTotal - fairByteTotal) * 100) / 100;
   const savingsPercent = Math.round((savings / traditionalTotal) * 100);
 
   return (
@@ -118,28 +119,28 @@ export default function BillComparisonHero({ onExploreClick }: BillComparisonHer
             <div className="space-y-3 text-xs border-t border-b border-zinc-100 py-4">
               <div className="flex justify-between items-center text-zinc-700">
                 <span>Food (Menu Price)</span>
-                <span className="font-semibold text-zinc-900 font-mono">₹{traditionalFood}</span>
+                <span className="font-semibold text-zinc-900 font-mono">₹{traditionalFood.toFixed(2)}</span>
               </div>
 
               <div className="flex justify-between items-center text-zinc-600 pl-2 border-l-2 border-red-200">
                 <span className="flex items-center gap-1 text-zinc-500">
                   Platform Fee
                 </span>
-                <span className="font-mono text-red-600 font-medium">+₹{traditionalPlatformFee}</span>
+                <span className="font-mono text-red-600 font-medium">+₹{traditionalPlatformFee.toFixed(2)}</span>
               </div>
 
               <div className="flex justify-between items-center text-zinc-600 pl-2 border-l-2 border-red-200">
                 <span className="flex items-center gap-1 text-zinc-500">
                   Standard Delivery Charge
                 </span>
-                <span className="font-mono text-red-600 font-medium">+₹{traditionalDeliveryFee}</span>
+                <span className="font-mono text-red-600 font-medium">+₹{traditionalDeliveryFee.toFixed(2)}</span>
               </div>
 
               <div className="flex justify-between items-center text-zinc-600 pl-2 border-l-2 border-red-200">
                 <span className="flex items-center gap-1 text-zinc-500">
                   Packaging & Service Fee
                 </span>
-                <span className="font-mono text-red-600 font-medium">+₹{traditionalPackagingAndService}</span>
+                <span className="font-mono text-red-600 font-medium">+₹{traditionalPackagingAndService.toFixed(2)}</span>
               </div>
 
               {traditionalSurge > 0 && (
@@ -147,13 +148,13 @@ export default function BillComparisonHero({ onExploreClick }: BillComparisonHer
                   <span className="flex items-center gap-1 text-zinc-500">
                     Surge / High Demand Fee
                   </span>
-                  <span className="font-mono text-red-600 font-medium">+₹{traditionalSurge}</span>
+                  <span className="font-mono text-red-600 font-medium">+₹{traditionalSurge.toFixed(2)}</span>
                 </div>
               )}
 
               <div className="pt-2 flex justify-between items-center font-bold text-red-700 bg-red-50/60 p-2.5 rounded-xl">
                 <span>Total Additional Charges</span>
-                <span className="font-mono font-extrabold text-sm">₹{traditionalAdditionalCharges}</span>
+                <span className="font-mono font-extrabold text-sm">₹{traditionalAdditionalCharges.toFixed(2)}</span>
               </div>
             </div>
 
@@ -162,7 +163,7 @@ export default function BillComparisonHero({ onExploreClick }: BillComparisonHer
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">Total You Pay</span>
                 <span className="text-2xl font-black text-zinc-900 font-sans">
-                  ₹{traditionalTotal}
+                  ₹{traditionalTotal.toFixed(2)}
                 </span>
               </div>
               <span className="text-xs font-semibold text-red-600 bg-red-50 px-3 py-1.5 rounded-xl">
@@ -186,41 +187,44 @@ export default function BillComparisonHero({ onExploreClick }: BillComparisonHer
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               </h3>
               <p className="text-xs text-emerald-300 mt-1 font-medium">
-                Restaurant menu price + clearly shown delivery = zero surprise charges
+                Restaurant menu price + transparent GST + delivery = zero surprise charges
               </p>
             </div>
 
             {/* Line Items */}
-            <div className="space-y-3 text-xs border-t border-b border-zinc-800 py-4">
+            <div className="space-y-2.5 text-xs border-t border-b border-zinc-800 py-4">
               <div className="flex justify-between items-center text-zinc-200">
-                <span>Food (Menu Price)</span>
-                <span className="font-semibold text-white font-mono">₹{fairByteFood}</span>
+                <span>Food subtotal</span>
+                <span className="font-semibold text-white font-mono">₹{fairByteFood.toFixed(2)}</span>
               </div>
 
               <div className="flex justify-between items-center text-zinc-300 pl-2 border-l-2 border-emerald-500">
-                <span className="flex items-center gap-1 text-zinc-300">
-                  Transparent Delivery
-                </span>
-                <span className="font-mono text-emerald-400 font-bold">₹{fairByteDelivery}</span>
+                <span>CGST (2.5%)</span>
+                <span className="font-mono text-emerald-400 font-bold">₹{fairByteCGST.toFixed(2)}</span>
               </div>
 
-              <div className="flex justify-between items-center text-emerald-300/80 pl-2 border-l-2 border-emerald-500">
-                <span className="flex items-center gap-1">
-                  Platform Fee
-                </span>
-                <span className="font-mono text-emerald-400 font-bold bg-emerald-500/20 px-2 py-0.5 rounded">₹0 FREE</span>
+              <div className="flex justify-between items-center text-zinc-300 pl-2 border-l-2 border-emerald-500">
+                <span>SGST (2.5%)</span>
+                <span className="font-mono text-emerald-400 font-bold">₹{fairByteSGST.toFixed(2)}</span>
               </div>
 
-              <div className="flex justify-between items-center text-emerald-300/80 pl-2 border-l-2 border-emerald-500">
-                <span className="flex items-center gap-1">
-                  Service / Convenience Fee
+              <div className="flex justify-between items-center text-emerald-300 pl-2 border-l-2 border-emerald-500">
+                <span className="flex items-center gap-1 font-bold">
+                  Platform fee
                 </span>
-                <span className="font-mono text-emerald-400 font-bold bg-emerald-500/20 px-2 py-0.5 rounded">₹0 ZERO</span>
+                <span className="font-mono text-emerald-400 font-bold bg-emerald-500/20 px-2 py-0.5 rounded">₹0.00</span>
+              </div>
+
+              <div className="flex justify-between items-center text-zinc-300 pl-2 border-l-2 border-emerald-500">
+                <span className="flex items-center gap-1">
+                  Delivery
+                </span>
+                <span className="font-mono text-emerald-400 font-bold">₹{fairByteDelivery.toFixed(2)}</span>
               </div>
 
               <div className="pt-2 flex justify-between items-center font-bold text-emerald-300 bg-emerald-900/30 p-2.5 rounded-xl border border-emerald-500/20">
-                <span>Total Additional Charges</span>
-                <span className="font-mono font-extrabold text-sm text-emerald-400">₹{fairByteDelivery}</span>
+                <span>Total</span>
+                <span className="font-mono font-extrabold text-sm text-emerald-400">₹{fairByteTotal.toFixed(2)}</span>
               </div>
             </div>
 
@@ -230,7 +234,7 @@ export default function BillComparisonHero({ onExploreClick }: BillComparisonHer
                 <div>
                   <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">Final Total</span>
                   <span className="text-3xl font-black text-emerald-400 font-sans">
-                    ₹{fairByteTotal}
+                    ₹{fairByteTotal.toFixed(2)}
                   </span>
                 </div>
                 
@@ -240,7 +244,7 @@ export default function BillComparisonHero({ onExploreClick }: BillComparisonHer
                     You Save
                   </span>
                   <span className="text-lg font-black font-sans leading-tight">
-                    ₹{savings}
+                    ₹{savings.toFixed(2)}
                   </span>
                 </div>
               </div>
