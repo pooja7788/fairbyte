@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { 
   ChefHat, 
   Bike, 
@@ -68,21 +68,30 @@ export default function AdminDashboardView({
       <div className="bg-gradient-to-r from-zinc-900 via-zinc-900 to-emerald-950 border-b border-zinc-800 sticky top-0 z-30 px-4 sm:px-8 py-4 backdrop-blur-md">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
+            {/* Cup Icon Badge */}
             <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
               <ChefHat className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                {/* Brand: RestoX */}
                 <h1 className="font-black text-lg sm:text-xl text-white tracking-tight font-sans">
-                  RestoX Admin & Kitchen Command
+                  Resto<span className="text-emerald-400">X</span>
                 </h1>
+                {/* Vertical Divider */}
+                <span className="w-px h-6 bg-zinc-600" />
+                {/* Admin Panel label */}
+                <span className="text-sm sm:text-base font-medium text-zinc-400 tracking-wide">
+                  Admin Panel
+                </span>
+                {/* Live badge */}
                 <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  LIVE LOGISTICS
+                  LIVE
                 </span>
               </div>
               <p className="text-xs text-zinc-400">
-                Transparent kitchen dispatch, real-time rider synchronization & stock control
+                Kitchen dispatch, real-time rider sync &amp; stock control
               </p>
             </div>
           </div>
