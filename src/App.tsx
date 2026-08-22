@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { 
   Sparkles, 
@@ -212,7 +212,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Place Order Simulation: Directly routes straight to Live Tracking, syncs with Supabase & redirects to Uber
+  // Place Order: Creates order in-app, triggers backend delivery dispatch, navigates to tracking
   const handlePlaceOrder = (paymentMethod: string) => {
     if (!billing || !selectedAddress || cart.length === 0) return;
 
@@ -220,12 +220,7 @@ export default function App() {
 
     setTimeout(() => {
       const rest = selectedRestaurant || MOCK_RESTAURANTS[0];
-      const randomId = "FB-" + Math.floor(1000 + Math.random() * 9000);
-      
-      // Uber Deep Link with Pickup (Restaurant) and Dropoff (Customer Address)
-      const pickupName = encodeURIComponent(rest.name);
-      const dropoffName = encodeURIComponent(selectedAddress.text || selectedAddress.label);
-      const uberRedirectUrl = `https://m.uber.com/ul/?action=setPickup&client_id=fairbyte&pickup[latitude]=${rest.lat}&pickup[longitude]=${rest.lng}&pickup[nickname]=${pickupName}&dropoff[latitude]=${selectedAddress.lat}&dropoff[longitude]=${selectedAddress.lng}&dropoff[nickname]=${dropoffName}`;
+      const randomId = "RX-" + Math.floor(1000 + Math.random() * 9000);
 
       const newOrder: Order = {
         id: randomId,
@@ -249,16 +244,32 @@ export default function App() {
       saveOrderToSupabase(newOrder);
       setIsProcessingCheckout(false);
       setCart([]);
-      navigateTo("tracking");
-      
-      // Open Uber with pickup and dropoff preloaded
-      try {
-        window.open(uberRedirectUrl, "_blank");
-      } catch (e) {
-        console.warn("Popup blocked or direct redirect:", e);
-      }
 
-      showToast(`Order ${randomId} placed! Redirecting to Uber...`);
+      // Navigate customer to in-app tracking — NO Uber redirect
+      navigateTo("tracking");
+      showToast(`✅ Order ${randomId} confirmed! Assigning delivery partner...`);
+
+      // Trigger backend delivery simulation in background (Uber Direct / delivery network)
+      fetch("/api/uber/dispatch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: randomId,
+          restaurantName: rest.name,
+          pickupLat: rest.lat,
+          pickupLng: rest.lng,
+          dropoffLat: selectedAddress.lat,
+          dropoffLng: selectedAddress.lng,
+          dropoffAddress: selectedAddress.text || selectedAddress.label
+        })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            console.log("[RestoX Dispatch] Delivery partner assigned:", data.deliveryJobId);
+          }
+        })
+        .catch(err => console.warn("[RestoX Dispatch] Backend dispatch call failed (simulation continues):", err));
     }, 600);
   };
 

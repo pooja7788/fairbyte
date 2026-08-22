@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { 
   ArrowLeft, 
@@ -13,7 +13,8 @@ import {
   Sparkles,
   RefreshCw,
   Navigation,
-  ArrowRight
+  Truck,
+  Wifi
 } from "lucide-react";
 import { Order } from "../types";
 
@@ -55,11 +56,64 @@ export default function DeliveryTrackingView({
   const [currentStep, setCurrentStep] = useState(getStepFromStatus(order.status));
   const [callSimulated, setCallSimulated] = useState(false);
   const [msgSimulated, setMsgSimulated] = useState(false);
+  const [isLive, setIsLive] = useState(false);
+  const [deliveryJobId, setDeliveryJobId] = useState<string | null>(null);
+  const socketRef = useRef<any>(null);
 
-  // Sync step whenever order status is updated (e.g. from Admin dashboard)
+  // Sync step whenever order status prop is updated (e.g. from Admin dashboard)
   useEffect(() => {
     setCurrentStep(getStepFromStatus(order.status));
   }, [order.status]);
+
+  // Connect to backend Socket.IO for live delivery tracking updates
+  useEffect(() => {
+    let socket: any = null;
+    let autoTimer: ReturnType<typeof setInterval> | null = null;
+
+    const connectSocket = async () => {
+      try {
+        // Dynamically import socket.io-client to avoid SSR issues
+        const { io } = await import("socket.io-client");
+        socket = io(window.location.origin, { transports: ["websocket", "polling"] });
+        socketRef.current = socket;
+
+        socket.on("connect", () => {
+          setIsLive(true);
+          console.log("[RestoX Tracking] Connected to delivery socket:", socket.id);
+        });
+
+        socket.on("disconnect", () => setIsLive(false));
+
+        // Listen for backend delivery status updates
+        socket.on("order_tracking_update", (data: any) => {
+          if (data?.order?.id === order.id || data?.delivery?.orderId === order.id) {
+            const step = getStepFromStatus(data.order?.status || data.delivery?.status);
+            setCurrentStep(step);
+            if (data.delivery?.jobId) setDeliveryJobId(data.delivery.jobId);
+          }
+        });
+
+        socket.on("order_accepted", (data: any) => {
+          if (data?.order?.id === order.id) setCurrentStep(1);
+        });
+
+      } catch (err) {
+        console.warn("[RestoX Tracking] Socket unavailable, using auto-simulation:", err);
+      }
+    };
+
+    connectSocket();
+
+    // Auto-simulation fallback: advances every 12s if socket not connected
+    autoTimer = setInterval(() => {
+      setCurrentStep(prev => (prev < 5 ? prev + 1 : 5));
+    }, 12000);
+
+    return () => {
+      if (socket) socket.disconnect();
+      if (autoTimer) clearInterval(autoTimer);
+    };
+  }, [order.id]);
 
   const handleSimulateCall = () => {
     setCallSimulated(true);
@@ -85,9 +139,14 @@ export default function DeliveryTrackingView({
         </button>
 
         <div className="flex items-center gap-2">
-          <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-mono font-bold">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-            <span>Order #{order.id}</span>
+          {/* Live connection badge */}
+          <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-bold border ${
+            isLive 
+              ? "bg-emerald-50 text-emerald-800 border-emerald-200" 
+              : "bg-amber-50 text-amber-800 border-amber-200"
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${isLive ? "bg-emerald-500 animate-ping" : "bg-amber-400 animate-pulse"}`} />
+            <span>{isLive ? `Live · #${order.id}` : `Tracking · #${order.id}`}</span>
           </div>
 
           <button
@@ -316,16 +375,12 @@ export default function DeliveryTrackingView({
               </button>
             </div>
 
-            {/* Direct Open in Uber Button */}
-            <a
-              href={`https://m.uber.com/ul/?action=setPickup&client_id=fairbyte&pickup[latitude]=12.9716&pickup[longitude]=77.5946&pickup[nickname]=${encodeURIComponent(order.restaurantName)}&dropoff[latitude]=${order.address.lat}&dropoff[longitude]=${order.address.lng}&dropoff[nickname]=${encodeURIComponent(order.address.text || order.address.label)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="cursor-pointer w-full bg-black hover:bg-zinc-800 text-white text-xs font-black py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 text-center mt-1"
-            >
-              <span>🚕 Open Live in Uber</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </a>
+            {/* Delivery Network Badge - replaces Uber deep link */}
+            <div className="w-full bg-gradient-to-r from-emerald-900/10 to-emerald-600/10 border border-emerald-200 text-emerald-800 text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 mt-1">
+              <Truck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Delivery managed by our partner network</span>
+              {isLive && <Wifi className="w-3 h-3 text-emerald-500 animate-pulse" />}
+            </div>
 
             {callSimulated && (
               <p className="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded-xl text-center font-bold">

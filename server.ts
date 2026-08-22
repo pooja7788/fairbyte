@@ -221,6 +221,66 @@ async function startServer() {
     });
   });
 
+  // ─────────────────────────────────────────────────────────────
+  // UBER DIRECT DISPATCH — Called by frontend after payment
+  // Creates a backend delivery job and starts the simulation.
+  // Customer stays inside the app; Uber operates as backend only.
+  // ─────────────────────────────────────────────────────────────
+  app.post("/api/uber/dispatch", (req, res) => {
+    const { orderId, restaurantName, pickupLat, pickupLng, dropoffLat, dropoffLng, dropoffAddress } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({ error: "Missing orderId" });
+    }
+
+    const jobId = "UBR-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+    const distance = estimateDistanceKm(
+      pickupLat || RESTAURANT_LAT,
+      pickupLng || RESTAURANT_LNG,
+      dropoffLat || 12.9698,
+      dropoffLng || 77.5972
+    );
+
+    // Create delivery record in memory
+    const deliveryDetails = {
+      orderId,
+      jobId,
+      restaurantName: restaurantName || "Restaurant",
+      dropoffAddress: dropoffAddress || "Customer Location",
+      status: "ACCEPTED",
+      driverName: "Alex Kumar",
+      driverPhone: "+91 98765 24109",
+      driverRating: 4.9,
+      vehicleNumber: "KA-05-MX-7832",
+      vehicle: "Electric Bike",
+      distanceKm: Math.round(distance * 10) / 10,
+      etaMinutes: Math.max(8, Math.round(distance * 3 + 5)),
+      createdAt: new Date().toISOString()
+    };
+
+    db.deliveries.set(orderId, deliveryDetails);
+
+    console.log(`[DISPATCH] Delivery job ${jobId} created for order ${orderId} — ${Math.round(distance * 10) / 10} km, ETA ~${deliveryDetails.etaMinutes} min`);
+
+    // Emit initial dispatch event to all connected clients
+    io.emit("order_tracking_update", {
+      order: { id: orderId, status: "ACCEPTED" },
+      delivery: deliveryDetails
+    });
+
+    // Start automated delivery progress simulation (every 10 seconds)
+    simulateUberDirectTracking(orderId, dropoffLat || 12.9698, dropoffLng || 77.5972, io);
+
+    res.json({
+      success: true,
+      deliveryJobId: jobId,
+      driver: deliveryDetails.driverName,
+      etaMinutes: deliveryDetails.etaMinutes,
+      message: "Delivery partner assigned. Tracking via backend socket events."
+    });
+  });
+
+
   // Get food menu
   app.get("/api/menu", (req, res) => {
     res.json(FOOD_MENU);
