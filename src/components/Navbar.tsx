@@ -116,15 +116,26 @@ export default function Navbar({
                   <line x1="14" y1="1" x2="14" y2="4" />
                 </svg>
               </div>
-              <div>
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
+                <button 
+                  onClick={() => onNavigate("home")}
+                  className="cursor-pointer flex items-center gap-1.5 text-left group"
+                >
                   <span className="font-black text-2xl tracking-tight text-[#1c271b] font-sans">
                     Resto<span className="text-[#365029]">X</span>
                   </span>
-                  <span className="bg-[#e4ede0] text-[#2b3e21] text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-wider border border-[#cfddc7] hidden sm:inline-block">
-                    TRANSPARENT
-                  </span>
-                </div>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNavigate("admin");
+                  }}
+                  className="cursor-pointer bg-[#e4ede0] hover:bg-[#d6e4d0] text-[#2b3e21] text-[11px] font-black uppercase px-3 py-1 rounded-full tracking-wider border border-[#cfddc7] hidden sm:inline-flex items-center gap-1.5 transition-all shadow-2xs active:scale-95"
+                  title="Open Admin Dashboard"
+                >
+                  <ChefHat className="w-3.5 h-3.5 text-[#365029]" />
+                  <span>Admin Panel</span>
+                </button>
               </div>
             </button>
           </div>

@@ -10,10 +10,26 @@ import { createClient } from "@supabase/supabase-js";
 // Load environment variables
 dotenv.config();
 
+export interface ServerFoodItem {
+  id: string;
+  restaurantId?: string;
+  title: string;
+  description: string;
+  price: number;
+  rating: number;
+  category: string;
+  isVeg: boolean;
+  isAvailable: boolean;
+  image: string;
+  prepTime?: string;
+  isPopular?: boolean;
+}
+
 // Initial list of items to browse
-const FOOD_MENU = [
+const FOOD_MENU: ServerFoodItem[] = [
   {
     id: "m1",
+    restaurantId: "rest-spice-route",
     title: "Signature Butter Chicken Bowl",
     description: "Tender tandoori chicken cooked in creamy tomato makhani sauce. Served with premium basmati rice.",
     price: 320,
@@ -21,7 +37,8 @@ const FOOD_MENU = [
     category: "Main Course",
     isVeg: false,
     isAvailable: true,
-    image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&q=80&w=800"
+    image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&q=80&w=800",
+    prepTime: "20-25 min"
   },
   {
     id: "m2",
@@ -281,9 +298,97 @@ async function startServer() {
   });
 
 
-  // Get food menu
+  // ─────────────────────────────────────────────────────────────
+  // MENU MANAGEMENT REST APIs (Restaurant Owner Menu CRUD)
+  // ─────────────────────────────────────────────────────────────
+
+  // Get food menu with optional restaurantId filtering
   app.get("/api/menu", (req, res) => {
+    const { restaurantId } = req.query;
+    if (restaurantId && restaurantId !== "all") {
+      return res.json(FOOD_MENU.filter(item => (item as any).restaurantId === restaurantId || (item as any).restaurantId === undefined));
+    }
     res.json(FOOD_MENU);
+  });
+
+  // Add new food item
+  app.post("/api/menu", (req, res) => {
+    const { title, description, price, category, isVeg, isAvailable, image, prepTime, restaurantId, isPopular } = req.body;
+    if (!title || price === undefined || Number(price) <= 0) {
+      return res.status(400).json({ error: "Title and valid positive price are required." });
+    }
+
+    const newItem = {
+      id: "m-" + Date.now(),
+      restaurantId: restaurantId || "rest-spice-route",
+      title: title.trim(),
+      description: description ? description.trim() : "",
+      price: Number(price),
+      rating: 4.8,
+      category: category || "Main Course",
+      isVeg: isVeg !== undefined ? isVeg : true,
+      isAvailable: isAvailable !== undefined ? isAvailable : true,
+      image: image || "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&q=80&w=800",
+      prepTime: prepTime || "15-20 min",
+      isPopular: !!isPopular
+    };
+
+    FOOD_MENU.unshift(newItem);
+    console.log(`[MENU] Added new food item: "${newItem.title}" (₹${newItem.price}) for restaurant ${newItem.restaurantId}`);
+    res.status(201).json({ success: true, item: newItem });
+  });
+
+  // Update existing food item
+  app.put("/api/menu/:id", (req, res) => {
+    const { id } = req.params;
+    const itemIndex = FOOD_MENU.findIndex(i => i.id === id);
+    if (itemIndex === -1) {
+      return res.status(404).json({ error: "Food item not found" });
+    }
+
+    const { title, description, price, category, isVeg, isAvailable, image, prepTime, isPopular } = req.body;
+    FOOD_MENU[itemIndex] = {
+      ...FOOD_MENU[itemIndex],
+      title: title !== undefined ? title.trim() : FOOD_MENU[itemIndex].title,
+      description: description !== undefined ? description.trim() : FOOD_MENU[itemIndex].description,
+      price: price !== undefined ? Number(price) : FOOD_MENU[itemIndex].price,
+      category: category !== undefined ? category : FOOD_MENU[itemIndex].category,
+      isVeg: isVeg !== undefined ? isVeg : FOOD_MENU[itemIndex].isVeg,
+      isAvailable: isAvailable !== undefined ? isAvailable : FOOD_MENU[itemIndex].isAvailable,
+      image: image !== undefined ? image : FOOD_MENU[itemIndex].image,
+      prepTime: prepTime !== undefined ? prepTime : (FOOD_MENU[itemIndex] as any).prepTime,
+      isPopular: isPopular !== undefined ? isPopular : (FOOD_MENU[itemIndex] as any).isPopular
+    };
+
+    console.log(`[MENU] Updated food item ${id}: "${FOOD_MENU[itemIndex].title}" (₹${FOOD_MENU[itemIndex].price})`);
+    res.json({ success: true, item: FOOD_MENU[itemIndex] });
+  });
+
+  // Quick toggle availability (In Stock / Sold Out)
+  app.patch("/api/menu/:id/availability", (req, res) => {
+    const { id } = req.params;
+    const { isAvailable } = req.body;
+    const item = FOOD_MENU.find(i => i.id === id);
+    if (!item) {
+      return res.status(404).json({ error: "Food item not found" });
+    }
+
+    item.isAvailable = !!isAvailable;
+    console.log(`[MENU] Toggled availability for "${item.title}": ${item.isAvailable ? "AVAILABLE" : "UNAVAILABLE"}`);
+    res.json({ success: true, item });
+  });
+
+  // Delete food item (soft archive / purge from active menu)
+  app.delete("/api/menu/:id", (req, res) => {
+    const { id } = req.params;
+    const itemIndex = FOOD_MENU.findIndex(i => i.id === id);
+    if (itemIndex === -1) {
+      return res.status(404).json({ error: "Food item not found" });
+    }
+
+    const removed = FOOD_MENU.splice(itemIndex, 1)[0];
+    console.log(`[MENU] Removed food item ${id}: "${removed.title}"`);
+    res.json({ success: true, message: `"${removed.title}" deleted from menu`, item: removed });
   });
 
   // Get user addresses

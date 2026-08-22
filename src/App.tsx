@@ -294,7 +294,56 @@ export default function App() {
   // Admin Toggle Menu Stock
   const handleToggleItemStock = (itemId: string, inStock: boolean) => {
     setMenuItems(prev => prev.map(i => i.id === itemId ? { ...i, isAvailable: inStock } : i));
-    showToast(`Item stock status updated`);
+    showToast(`Item marked as ${inStock ? "Available ✅" : "Unavailable / Sold Out ❌"}`);
+    
+    // Sync with backend
+    fetch(`/api/menu/${itemId}/availability`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isAvailable: inStock })
+    }).catch(() => {});
+  };
+
+  // Admin Add Menu Item
+  const handleAddMenuItem = (itemData: Omit<FoodItem, "id">) => {
+    const newItem: FoodItem = {
+      ...itemData,
+      id: "m-" + Date.now()
+    };
+    setMenuItems(prev => [newItem, ...prev]);
+    showToast(`✅ "${newItem.title}" added to restaurant menu at ₹${newItem.price}`);
+
+    // Sync with backend
+    fetch("/api/menu", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newItem)
+    }).catch(() => {});
+  };
+
+  // Admin Edit Menu Item
+  const handleEditMenuItem = (updatedItem: FoodItem) => {
+    setMenuItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i));
+    showToast(`✅ "${updatedItem.title}" updated successfully (₹${updatedItem.price})`);
+
+    // Sync with backend
+    fetch(`/api/menu/${updatedItem.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedItem)
+    }).catch(() => {});
+  };
+
+  // Admin Delete Menu Item
+  const handleDeleteMenuItem = (itemId: string) => {
+    const itemToDelete = menuItems.find(i => i.id === itemId);
+    setMenuItems(prev => prev.filter(i => i.id !== itemId));
+    showToast(`🗑️ "${itemToDelete?.title || "Item"}" removed from active menu`);
+
+    // Sync with backend
+    fetch(`/api/menu/${itemId}`, {
+      method: "DELETE"
+    }).catch(() => {});
   };
 
   // Filtered Restaurant Discovery List for Home with Dynamic Distance Calculation
@@ -646,6 +695,9 @@ export default function App() {
             restaurants={MOCK_RESTAURANTS}
             onUpdateOrderStatus={handleUpdateOrderStatus}
             onToggleItemStock={handleToggleItemStock}
+            onAddMenuItem={handleAddMenuItem}
+            onEditMenuItem={handleEditMenuItem}
+            onDeleteMenuItem={handleDeleteMenuItem}
             onNavigateToTracking={(id) => {
               const match = pastOrders.find(o => o.id === id);
               if (match) {
