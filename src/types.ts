@@ -49,15 +49,26 @@ export interface TraditionalComparison {
   savings: number;
 }
 
+export interface Coupon {
+  code: string;
+  title: string;
+  description: string;
+  discountType: "percentage" | "fixed" | "free_delivery";
+  discountValue: number;
+  minOrder: number;
+}
+
 export interface BillingBreakdown {
   subtotal: number;
   deliveryFee: number;
-  platformFee: number; // 0 for FairByte
-  serviceFee: number;  // 0 for FairByte
+  platformFee: number; // ₹0 for FairByte
+  serviceFee: number;  // ₹0 for FairByte
   cgst: number;
   sgst: number;
+  discount: number;
   grandTotal: number;
   distanceKm?: number;
+  appliedCoupon?: Coupon | null;
   traditionalComparison?: TraditionalComparison;
 }
 
@@ -65,6 +76,8 @@ export interface Address {
   id: string;
   label: string;
   text: string;
+  flatBuilding?: string;
+  landmark?: string;
   lat: number;
   lng: number;
   isDefault?: boolean;
@@ -116,6 +129,7 @@ export interface Order {
   paymentIntentId?: string;
   customerPhone?: string;
   elapsedAcceptSeconds?: number;
+  orderTimelineStep?: number;
 }
 
 export interface Delivery {
@@ -129,3 +143,52 @@ export interface Delivery {
   trackingUrl: string;
   etaMinutes: number;
 }
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  avatar: string;
+  isLoggedIn: boolean;
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  timeAgo: string;
+  read: boolean;
+  type: "order" | "offer" | "system";
+  orderId?: string;
+}
+
+export interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+  category: "pricing" | "delivery" | "restaurant" | "orders" | "refunds";
+}
+
+export interface SupportChatMessage {
+  id: string;
+  sender: "user" | "support";
+  text: string;
+  timestamp: string;
+}
+
+export type AppView =
+  | "home"
+  | "search"
+  | "restaurant"
+  | "cart"
+  | "checkout"
+  | "confirmation"
+  | "tracking"
+  | "orders"
+  | "profile"
+  | "addresses"
+  | "favorites"
+  | "help"
+  | "offers"
+  | "about";

@@ -4,13 +4,13 @@ import {
   Star, 
   Clock, 
   Bike, 
-  MapPin, 
+  ShieldCheck, 
+  Heart, 
   Search, 
   Leaf, 
-  Pizza, 
-  Sparkles,
-  ShieldCheck,
-  ShoppingBag
+  Tag, 
+  ShoppingBag,
+  Info
 } from "lucide-react";
 import { Restaurant, FoodItem, CartItem } from "../types";
 import FoodCard from "./FoodCard";
@@ -23,6 +23,9 @@ interface RestaurantDetailViewProps {
   onRemoveFromCart: (item: FoodItem) => void;
   onBack: () => void;
   onOpenCart: () => void;
+  favorites: string[];
+  onToggleFavoriteRestaurant: (id: string) => void;
+  onToggleFavoriteItem: (id: string) => void;
 }
 
 export default function RestaurantDetailView({
@@ -32,258 +35,242 @@ export default function RestaurantDetailView({
   onAddToCart,
   onRemoveFromCart,
   onBack,
-  onOpenCart
+  onOpenCart,
+  favorites,
+  onToggleFavoriteRestaurant,
+  onToggleFavoriteItem
 }: RestaurantDetailViewProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [dietFilter, setDietFilter] = useState<"all" | "veg" | "non-veg">("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [menuSearchQuery, setMenuSearchQuery] = useState("");
+  const [onlyVegMenu, setOnlyVegMenu] = useState(false);
 
-  // Categories list based on restaurant's specific categories
+  // Filter items for this specific restaurant
+  const restaurantItems = useMemo(() => {
+    return menuItems.filter(item => item.restaurantId === restaurant.id);
+  }, [menuItems, restaurant.id]);
+
+  // Derived categories from active restaurant items
   const categories = useMemo(() => {
-    return ["All", ...restaurant.categories];
-  }, [restaurant]);
+    const set = new Set<string>(["All", "Recommended"]);
+    restaurantItems.forEach(i => set.add(i.category));
+    return Array.from(set);
+  }, [restaurantItems]);
 
-  // Filtered menu items
+  // Filtered menu based on search, category & veg toggles
   const filteredItems = useMemo(() => {
-    return menuItems.filter((item) => {
-      // Must match restaurant
-      if (item.restaurantId !== restaurant.id) return false;
-
-      // Match category
-      const matchesCat = selectedCategory === "All" || item.category === selectedCategory;
-
-      // Match dietary
-      let matchesDiet = true;
-      if (dietFilter === "veg") matchesDiet = item.isVeg;
-      if (dietFilter === "non-veg") matchesDiet = !item.isVeg;
-
-      // Match search query
+    return restaurantItems.filter(item => {
       const matchesSearch = 
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase());
+        item.title.toLowerCase().includes(menuSearchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(menuSearchQuery.toLowerCase());
 
-      return matchesCat && matchesDiet && matchesSearch;
+      const matchesCategory = 
+        selectedCategory === "All" ||
+        (selectedCategory === "Recommended" && (item.isPopular || item.category === "Recommended")) ||
+        item.category === selectedCategory;
+
+      const matchesVeg = !onlyVegMenu || item.isVeg;
+
+      return matchesSearch && matchesCategory && matchesVeg;
     });
-  }, [menuItems, restaurant.id, selectedCategory, dietFilter, searchQuery]);
+  }, [restaurantItems, menuSearchQuery, selectedCategory, onlyVegMenu]);
 
-  const totalCartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const isFav = favorites.includes(restaurant.id);
+  const totalCartCount = cart.reduce((acc, c) => acc + c.quantity, 0);
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-8 pb-16">
       
-      {/* Top Back Navigation Bar */}
+      {/* 1. TOP NAVIGATION / BACK BAR */}
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white border border-zinc-200 text-xs font-bold text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 shadow-xs transition-all active:scale-95"
+          className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white hover:bg-zinc-100 border border-zinc-200 text-xs font-bold text-zinc-800 transition-colors shadow-2xs"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Restaurants</span>
         </button>
 
-        {totalCartCount > 0 && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={onOpenCart}
-            className="cursor-pointer sm:hidden bg-zinc-900 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-md"
+            onClick={() => onToggleFavoriteRestaurant(restaurant.id)}
+            className="cursor-pointer p-2.5 rounded-2xl bg-white hover:bg-red-50 border border-zinc-200 text-zinc-600 hover:text-red-500 transition-colors shadow-2xs"
+            title={isFav ? "Remove from favorites" : "Add to favorites"}
           >
-            <ShoppingBag className="w-4 h-4 text-emerald-400" />
-            <span>Cart ({totalCartCount})</span>
+            <Heart className={`w-4 h-4 ${isFav ? "fill-red-500 text-red-500" : ""}`} />
           </button>
-        )}
+        </div>
       </div>
 
-      {/* Hero Banner Card */}
-      <div className="bg-white border border-zinc-200/80 rounded-3xl overflow-hidden shadow-sm relative">
-        {/* Banner Image */}
-        <div className="h-52 sm:h-64 lg:h-72 w-full relative overflow-hidden bg-zinc-900">
+      {/* 2. RESTAURANT HERO BANNER & HEADER */}
+      <div className="relative rounded-3xl overflow-hidden bg-white border border-zinc-200/80 shadow-md">
+        
+        {/* Banner Cover */}
+        <div className="relative h-56 sm:h-72 w-full bg-zinc-900">
           <img
-            src={restaurant.bannerImage || restaurant.image}
+            src={restaurant.bannerImage}
             alt={restaurant.name}
-            className="w-full h-full object-cover opacity-85"
+            className="w-full h-full object-cover opacity-80"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+
+          <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full text-white text-xs font-bold flex items-center gap-1.5 border border-white/15">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>Direct Restaurant Menu Prices</span>
+          </div>
+        </div>
+
+        {/* Restaurant Header Details */}
+        <div className="p-6 sm:p-8 -mt-12 relative z-10 bg-white rounded-t-3xl border-t border-zinc-100 flex flex-col md:flex-row md:items-end justify-between gap-6">
           
-          {/* Transparent Badge in banner */}
-          <div className="absolute top-4 right-4 bg-emerald-500/90 backdrop-blur-md text-zinc-950 font-black text-xs px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4" />
-            <span>FairByte Verified Menu Prices</span>
-          </div>
-        </div>
-
-        {/* Restaurant Header Info */}
-        <div className="p-6 sm:p-8 relative -mt-16 sm:-mt-20 z-10 space-y-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-zinc-200/80 shadow-lg space-y-4">
-            
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl sm:text-3xl font-black text-zinc-950 tracking-tight">
-                    {restaurant.name}
-                  </h1>
-                  {restaurant.isPureVeg && (
-                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-500/20 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-lg flex items-center gap-1">
-                      <Leaf className="w-3 h-3" />
-                      Pure Veg
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs sm:text-sm text-zinc-600 font-normal">
-                  {restaurant.tagline}
-                </p>
-                <div className="flex items-center gap-1.5 text-xs text-zinc-400 pt-1">
-                  <MapPin className="w-3.5 h-3.5 text-zinc-500" />
-                  <span>{restaurant.address}</span>
-                </div>
-              </div>
-
-              {/* Key Metrics Pill Box */}
-              <div className="flex items-center gap-3 self-start md:self-auto bg-zinc-50 border border-zinc-200/80 p-3 rounded-2xl shrink-0">
-                <div className="text-center px-3 border-r border-zinc-200">
-                  <div className="flex items-center gap-1 font-black text-sm text-zinc-900 justify-center">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-                    <span>{restaurant.rating.toFixed(1)}</span>
-                  </div>
-                  <span className="text-[10px] text-zinc-400 font-medium">{restaurant.reviewCount}+ ratings</span>
-                </div>
-
-                <div className="text-center px-3 border-r border-zinc-200">
-                  <div className="flex items-center gap-1 font-black text-sm text-zinc-900 justify-center">
-                    <Clock className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{restaurant.deliveryTimeMin}m</span>
-                  </div>
-                  <span className="text-[10px] text-zinc-400 font-medium">Delivery ETA</span>
-                </div>
-
-                <div className="text-center px-3">
-                  <div className="flex items-center gap-1 font-black text-sm text-emerald-700 justify-center font-mono">
-                    <Bike className="w-3.5 h-3.5" />
-                    <span>₹{restaurant.deliveryFee}</span>
-                  </div>
-                  <span className="text-[10px] text-zinc-400 font-medium">Fair Delivery</span>
-                </div>
-              </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl sm:text-4xl font-black text-zinc-950 tracking-tight font-sans">
+                {restaurant.name}
+              </h1>
+              {restaurant.isPureVeg && (
+                <span className="bg-emerald-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <Leaf className="w-3 h-3" />
+                  <span>Pure Veg</span>
+                </span>
+              )}
             </div>
 
-            {/* Transparency guarantee callout */}
-            <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs text-zinc-600">
-              <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
-                <Sparkles className="w-4 h-4 text-emerald-600" />
-                No surprise platform charges. You pay direct menu price + ₹{restaurant.deliveryFee} delivery.
-              </span>
+            <p className="text-xs sm:text-sm text-zinc-500 font-medium max-w-xl">
+              {restaurant.tagline}
+            </p>
+
+            <p className="text-xs text-zinc-400">
+              📍 {restaurant.address} • {restaurant.cuisine.join(", ")}
+            </p>
+          </div>
+
+          {/* Metrics Card */}
+          <div className="flex items-center gap-3 shrink-0 bg-zinc-50 p-3.5 rounded-2xl border border-zinc-200/80 text-xs">
+            <div className="px-3 py-1 bg-emerald-100 text-emerald-900 rounded-xl font-black flex items-center gap-1">
+              <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
+              <span>{restaurant.rating}</span>
             </div>
 
+            <div className="border-l border-zinc-200 pl-3">
+              <span className="text-zinc-400 text-[10px] block uppercase font-bold">Delivery</span>
+              <span className="font-bold text-zinc-900">{restaurant.deliveryTimeMin} mins</span>
+            </div>
+
+            <div className="border-l border-zinc-200 pl-3">
+              <span className="text-zinc-400 text-[10px] block uppercase font-bold">Courier Fee</span>
+              <span className="font-bold text-zinc-900">₹{restaurant.deliveryFee}</span>
+            </div>
           </div>
+
         </div>
+
+        {/* Offers Pill Ribbon */}
+        <div className="px-6 py-3 bg-emerald-50/70 border-t border-emerald-100 flex items-center gap-2 text-xs font-bold text-emerald-900">
+          <Tag className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>Special Offer: Use code <span className="font-mono underline font-black">FAIRFREE</span> for free delivery above ₹299!</span>
+        </div>
+
       </div>
 
-      {/* Menu Filter & Search Bar */}
-      <div className="bg-white border border-zinc-200/80 rounded-3xl p-5 shadow-xs space-y-4 sticky top-[76px] z-30 backdrop-blur-md bg-white/95">
+      {/* 3. MENU CONTROLS & STICKY CATEGORY BAR */}
+      <div className="sticky top-18 z-30 bg-white/95 backdrop-blur-md border border-zinc-200/80 rounded-2xl p-3.5 shadow-sm space-y-3">
         
-        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-          {/* Search inside menu */}
-          <div className="relative w-full sm:max-w-xs">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          
+          {/* Menu Search */}
+          <div className="relative w-full sm:w-72">
             <input
               type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search in this menu..."
-              className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl pl-9 pr-3 py-2 text-xs font-medium text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+              value={menuSearchQuery}
+              onChange={(e) => setMenuSearchQuery(e.target.value)}
+              placeholder={`Search in ${restaurant.name}...`}
+              className="w-full bg-zinc-50 border border-zinc-200 rounded-xl pl-9 pr-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
             />
             <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
           </div>
 
-          {/* Dietary filters */}
-          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+          {/* Veg Only Toggle */}
+          <div className="flex items-center justify-between w-full sm:w-auto gap-2">
             <button
-              onClick={() => setDietFilter("all")}
-              className={`cursor-pointer px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                dietFilter === "all"
+              onClick={() => setOnlyVegMenu(!onlyVegMenu)}
+              className={`cursor-pointer px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all ${
+                onlyVegMenu
+                  ? "bg-emerald-600 text-white border-emerald-700 shadow-xs"
+                  : "bg-white text-emerald-800 border-emerald-300 hover:bg-emerald-50"
+              }`}
+            >
+              <Leaf className="w-3.5 h-3.5" />
+              <span>Veg Only</span>
+            </button>
+
+            {totalCartCount > 0 && (
+              <button
+                onClick={onOpenCart}
+                className="cursor-pointer bg-zinc-950 text-white px-4 py-1.5 rounded-xl text-xs font-black flex items-center gap-2 shadow-xs"
+              >
+                <ShoppingBag className="w-3.5 h-3.5 text-emerald-400" />
+                <span>View Cart ({totalCartCount})</span>
+              </button>
+            )}
+          </div>
+
+        </div>
+
+        {/* Category Horizontal Scroll Bar */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`cursor-pointer px-4 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                selectedCategory === cat
                   ? "bg-zinc-950 text-white shadow-xs"
                   : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
               }`}
             >
-              All Items
+              {cat}
             </button>
-
-            <button
-              onClick={() => setDietFilter(dietFilter === "veg" ? "all" : "veg")}
-              className={`cursor-pointer px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all ${
-                dietFilter === "veg"
-                  ? "bg-emerald-600 text-white shadow-xs"
-                  : "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
-              }`}
-            >
-              <Leaf className="w-3 h-3" />
-              <span>Pure Veg</span>
-            </button>
-
-            <button
-              onClick={() => setDietFilter(dietFilter === "non-veg" ? "all" : "non-veg")}
-              className={`cursor-pointer px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all ${
-                dietFilter === "non-veg"
-                  ? "bg-red-600 text-white shadow-xs"
-                  : "bg-red-50 text-red-800 border border-red-200 hover:bg-red-100"
-              }`}
-            >
-              <Pizza className="w-3 h-3" />
-              <span>Non-Veg</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Category Horizontal Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 smooth-scroll">
-          {categories.map((cat) => {
-            const isSelected = selectedCategory === cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`cursor-pointer px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all duration-200 ${
-                  isSelected
-                    ? "bg-emerald-700 text-white shadow-md shadow-emerald-700/15"
-                    : "bg-zinc-100/80 text-zinc-600 hover:bg-zinc-200/80"
-                }`}
-              >
-                {cat}
-              </button>
-            );
-          })}
+          ))}
         </div>
 
       </div>
 
-      {/* Menu Grid */}
+      {/* 4. FOOD DISHES GRID */}
       {filteredItems.length === 0 ? (
         <div className="bg-white border border-zinc-200/80 rounded-3xl p-12 text-center space-y-3">
           <span className="text-4xl">🍽️</span>
           <h3 className="font-extrabold text-base text-zinc-900">No dishes match your filter</h3>
           <p className="text-xs text-zinc-500">
-            Try adjusting your search query or dietary preferences.
+            Try adjusting your search query or switching category filter.
           </p>
           <button
             onClick={() => {
+              setMenuSearchQuery("");
               setSelectedCategory("All");
-              setDietFilter("all");
-              setSearchQuery("");
+              setOnlyVegMenu(false);
             }}
             className="cursor-pointer text-xs font-bold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200 mt-2"
           >
-            Reset Filters
+            Clear Filters
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {filteredItems.map((item) => {
-            const cartItem = cart.find(c => c.item.id === item.id);
-            const quantity = cartItem ? cartItem.quantity : 0;
+            const cartEntry = cart.find(c => c.item.id === item.id);
+            const quantity = cartEntry ? cartEntry.quantity : 0;
+            const isItemFav = favorites.includes(item.id);
+
             return (
               <FoodCard
                 key={item.id}
                 item={item}
-                quantity={quantity}
-                onIncrement={() => onAddToCart(item, restaurant)}
-                onDecrement={() => onRemoveFromCart(item)}
+                restaurant={restaurant}
+                quantityInCart={quantity}
+                onAddToCart={onAddToCart}
+                onRemoveFromCart={onRemoveFromCart}
+                isFavorite={isItemFav}
+                onToggleFavorite={() => onToggleFavoriteItem(item.id)}
               />
             );
           })}

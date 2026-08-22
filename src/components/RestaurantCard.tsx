@@ -1,104 +1,112 @@
 import React from "react";
-import { Star, Clock, Bike, Leaf, Sparkles } from "lucide-react";
+import { Star, Clock, Bike, Heart, Leaf, ShieldCheck } from "lucide-react";
 import { Restaurant } from "../types";
 
 export interface RestaurantCardProps {
+  key?: React.Key;
   restaurant: Restaurant;
   onClick: () => void;
-  key?: React.Key;
+  isFavorite?: boolean;
+  onToggleFavorite?: (restaurantId: string, e?: React.MouseEvent) => void;
 }
 
-export default function RestaurantCard({ restaurant, onClick }: RestaurantCardProps) {
+export default function RestaurantCard({
+  restaurant,
+  onClick,
+  isFavorite = false,
+  onToggleFavorite
+}: RestaurantCardProps) {
   return (
     <div
       onClick={onClick}
-      className="cursor-pointer group bg-white border border-zinc-200/80 hover:border-emerald-500/50 rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col h-full hover:-translate-y-1"
+      className="cursor-pointer group bg-white rounded-3xl border border-zinc-200/80 hover:border-emerald-500/40 shadow-xs hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
     >
-      {/* Image Banner */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-zinc-100">
+      {/* Image Container */}
+      <div className="relative h-48 w-full overflow-hidden bg-zinc-100">
         <img
           src={restaurant.image}
           alt={restaurant.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          loading="lazy"
         />
 
-        {/* Dietary / Feature Badges */}
-        <div className="absolute top-3 left-3 flex gap-2 z-10">
-          {restaurant.isPureVeg ? (
-            <span className="bg-white/95 backdrop-blur-xs text-emerald-800 border border-emerald-500/20 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              Pure Veg
-            </span>
-          ) : (
-            <span className="bg-white/95 backdrop-blur-xs text-zinc-800 border border-zinc-200/60 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-xl shadow-sm">
-              Multi-Cuisine
-            </span>
-          )}
+        {/* Gradient Overlay for bottom text legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
-          {restaurant.featured && (
-            <span className="bg-amber-500 text-zinc-950 text-[10px] font-black uppercase px-2.5 py-1 rounded-xl shadow-sm flex items-center gap-1">
-              <Sparkles className="w-3 h-3 fill-current" />
-              Popular
-            </span>
-          )}
-        </div>
+        {/* Favorite Heart Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite?.(restaurant.id, e);
+          }}
+          className="cursor-pointer absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-zinc-700 hover:text-red-600 transition-colors shadow-sm active:scale-90"
+          title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+        >
+          <Heart
+            className={`w-4 h-4 transition-colors ${
+              isFavorite ? "fill-red-500 text-red-500" : "text-zinc-600"
+            }`}
+          />
+        </button>
 
-        {/* Rating Pill */}
-        <div className="absolute top-3 right-3 z-10">
-          <div className="bg-white/95 backdrop-blur-xs text-zinc-950 border border-zinc-200/60 text-xs font-black px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-sm">
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-            <span>{restaurant.rating.toFixed(1)}</span>
-            <span className="text-[10px] text-zinc-400 font-normal">({restaurant.reviewCount})</span>
+        {/* Pure Veg Badge */}
+        {restaurant.isPureVeg && (
+          <div className="absolute top-3 left-3 bg-emerald-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
+            <Leaf className="w-3 h-3" />
+            <span>Pure Veg</span>
+          </div>
+        )}
+
+        {/* Delivery & Price Range Overlay on Image bottom */}
+        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs font-bold">
+          <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10">
+            <Clock className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{restaurant.deliveryTimeMin} mins</span>
+          </div>
+
+          <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10">
+            <Bike className="w-3.5 h-3.5 text-emerald-400" />
+            <span>₹{restaurant.deliveryFee} delivery</span>
           </div>
         </div>
-
-        {/* Delivery Time & Cost Banner */}
-        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] font-bold text-white z-10">
-          <span className="bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg flex items-center gap-1.5">
-            <Clock className="w-3 h-3 text-emerald-400" />
-            <span>{restaurant.deliveryTimeMin} mins</span>
-          </span>
-
-          <span className="bg-emerald-950/80 backdrop-blur-md border border-emerald-400/30 text-emerald-300 px-2.5 py-1 rounded-lg flex items-center gap-1">
-            <Bike className="w-3 h-3" />
-            <span>₹{restaurant.deliveryFee} Delivery</span>
-          </span>
-        </div>
-
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-80 pointer-events-none" />
       </div>
 
-      {/* Restaurant Info Body */}
-      <div className="p-5 flex flex-col flex-grow space-y-2.5">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-extrabold text-lg text-zinc-950 tracking-tight group-hover:text-emerald-700 transition-colors leading-snug">
-            {restaurant.name}
-          </h3>
-          <span className="text-xs font-mono font-bold text-zinc-400 shrink-0">
-            {restaurant.priceRange}
-          </span>
+      {/* Info Body */}
+      <div className="p-5 flex-grow flex flex-col justify-between space-y-3">
+        <div className="space-y-1.5">
+          
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-black text-zinc-950 text-base group-hover:text-emerald-700 transition-colors tracking-tight line-clamp-1">
+              {restaurant.name}
+            </h3>
+
+            {/* Rating pill */}
+            <div className="flex items-center gap-1 bg-emerald-50 text-emerald-900 border border-emerald-200/80 px-2 py-0.5 rounded-lg text-xs font-black shrink-0">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+              <span>{restaurant.rating}</span>
+            </div>
+          </div>
+
+          {/* Cuisines */}
+          <p className="text-xs text-zinc-500 line-clamp-1">
+            {restaurant.cuisine.join(" • ")}
+          </p>
+
+          {/* Tagline */}
+          <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
+            {restaurant.tagline}
+          </p>
         </div>
 
-        <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed font-normal flex-grow">
-          {restaurant.tagline}
-        </p>
-
-        {/* Cuisines Tags */}
-        <div className="flex flex-wrap gap-1.5 pt-2 border-t border-zinc-100">
-          {restaurant.cuisine.slice(0, 3).map((c, i) => (
-            <span
-              key={i}
-              className="text-[10px] font-semibold text-zinc-600 bg-zinc-100 px-2.5 py-0.5 rounded-md"
-            >
-              {c}
-            </span>
-          ))}
-          {restaurant.cuisine.length > 3 && (
-            <span className="text-[10px] text-zinc-400 py-0.5">
-              +{restaurant.cuisine.length - 3}
-            </span>
-          )}
+        {/* Bottom Menu Guarantee Tag */}
+        <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-500 font-medium">
+          <div className="flex items-center gap-1 text-emerald-700 font-bold">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>True Menu Price</span>
+          </div>
+          <span className="font-mono font-bold text-zinc-700">{restaurant.priceRange}</span>
         </div>
+
       </div>
     </div>
   );

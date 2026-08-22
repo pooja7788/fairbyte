@@ -1,4 +1,17 @@
-import { Restaurant, FoodItem, Address, DeliveryPartner, TraditionalComparison, BillingBreakdown } from "./types";
+import { 
+  Restaurant, 
+  FoodItem, 
+  Address, 
+  DeliveryPartner, 
+  TraditionalComparison, 
+  BillingBreakdown,
+  Coupon,
+  Order,
+  UserProfile,
+  AppNotification,
+  FAQItem,
+  SupportChatMessage
+} from "./types";
 
 export const MOCK_RESTAURANTS: Restaurant[] = [
   {
@@ -178,6 +191,19 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
   {
     id: "sr-6",
     restaurantId: "rest-spice-route",
+    title: "Chicken Tikka Masala",
+    description: "Smoky boneless chicken chunks cooked in a spicy, fiery onion-tomato gravy with bell peppers.",
+    price: 330,
+    rating: 4.8,
+    category: "Main Course",
+    isVeg: false,
+    isAvailable: true,
+    image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&q=80&w=800",
+    prepTime: "20 min"
+  },
+  {
+    id: "sr-7",
+    restaurantId: "rest-spice-route",
     title: "Murgh Dum Biryani Single",
     description: "Fragrant long-grain basmati rice layered with juicy chicken drumstick and saffron milk. Served with raita.",
     price: 340,
@@ -189,7 +215,7 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     prepTime: "25 min"
   },
   {
-    id: "sr-7",
+    id: "sr-8",
     restaurantId: "rest-spice-route",
     title: "Garlic Butter Naan (2 pcs)",
     description: "Clay oven baked leavened flatbread brushed with crushed garlic and melted butter.",
@@ -202,7 +228,7 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     prepTime: "10 min"
   },
   {
-    id: "sr-8",
+    id: "sr-9",
     restaurantId: "rest-spice-route",
     title: "Classic Alphonso Mango Lassi",
     description: "Rich chilled yogurt shake blended with authentic Ratnagiri mango pulp and crushed pistachios.",
@@ -215,7 +241,7 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     prepTime: "5 min"
   },
   {
-    id: "sr-9",
+    id: "sr-10",
     restaurantId: "rest-spice-route",
     title: "Gulab Jamun (2 pcs)",
     description: "Soft golden khoya dumplings soaked in warm rose water and cardamom sugar syrup.",
@@ -248,20 +274,20 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     restaurantId: "rest-dosa-district",
     title: "Ghee Roast Podi Dosa",
     description: "Paper thin golden dosa crisped in pure desi ghee and sprinkled liberally with spicy gunpowder podi.",
-    price: 170,
+    price: 160,
     rating: 4.8,
     category: "Dosas & Uttapams",
     isVeg: true,
     isAvailable: true,
     image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&q=80&w=800",
     isPopular: true,
-    prepTime: "12 min"
+    prepTime: "15 min"
   },
   {
     id: "dd-3",
     restaurantId: "rest-dosa-district",
-    title: "Button Idli Platter with Sambar Dip",
-    description: "14 mini steamed rice cakes dipped in piping hot drumstick sambar with fresh coconut chutney.",
+    title: "Steamed Button Idlis & Medu Vada Duo",
+    description: "4 miniature fluffy rice cakes paired with 1 crispy lentil fritter, piping hot sambar and fresh coconut dip.",
     price: 110,
     rating: 4.7,
     category: "Idli & Vada",
@@ -273,22 +299,22 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
   {
     id: "dd-4",
     restaurantId: "rest-dosa-district",
-    title: "Medu Vada Combo (2 pcs)",
-    description: "Crispy golden lentil fritters with crushed black pepper, ginger, and curry leaves. Served with 3 chutneys.",
-    price: 90,
-    rating: 4.6,
-    category: "Idli & Vada",
+    title: "South Indian Executive Thali",
+    description: "Steamed Sona Masoori rice, sambar, rasam, kootu, curd, appalam, pickle and payasam dessert.",
+    price: 210,
+    rating: 4.8,
+    category: "Meals",
     isVeg: true,
     isAvailable: true,
-    image: "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&q=80&w=800",
-    prepTime: "10 min"
+    image: "https://images.unsplash.com/photo-1610192244261-3f33de3f55e4?auto=format&fit=crop&q=80&w=800",
+    prepTime: "15 min"
   },
   {
     id: "dd-5",
     restaurantId: "rest-dosa-district",
-    title: "Traditional South Indian Filter Kaapi",
-    description: "Strong decoction filter coffee brewed with chicory and frothed in brass davarah.",
-    price: 50,
+    title: "Authentic Degree Filter Coffee",
+    description: "Freshly brewed chicory coffee decoction frothed with boiled whole buffalo milk in traditional brass dabarah.",
+    price: 60,
     rating: 4.9,
     category: "Beverages",
     isVeg: true,
@@ -302,8 +328,8 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     id: "bj-1",
     restaurantId: "rest-biryani-junction",
     title: "Hyderabadi Chicken Dum Biryani",
-    description: "Kachi yakhni style long basmati rice layered with succulent chicken pieces, caramelized onions, and kewra.",
-    price: 360,
+    description: "Kachi yakhni style long grain basmati rice, marinated tender chicken, saffron, fried onions, and mirchi ka salan.",
+    price: 320,
     rating: 4.9,
     category: "Recommended",
     isVeg: false,
@@ -315,50 +341,36 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
   {
     id: "bj-2",
     restaurantId: "rest-biryani-junction",
-    title: "Mutton Nizami Dum Biryani",
-    description: "Tender goat meat slow-cooked on dum for 4 hours with fragrant spices, saffron rice, and boiled egg.",
-    price: 440,
-    rating: 4.9,
+    title: "Paneer Tikka Dum Biryani",
+    description: "Charcoal grilled spiced cottage cheese layered with fragrant saffron rice, mint, and toasted cashews.",
+    price: 280,
+    rating: 4.7,
     category: "Dum Biryanis",
-    isVeg: false,
+    isVeg: true,
     isAvailable: true,
-    image: "https://images.unsplash.com/photo-1633945274405-b6c8069047b0?auto=format&fit=crop&q=80&w=800",
-    isPopular: true,
-    prepTime: "30 min"
+    image: "https://images.unsplash.com/photo-1645177628172-a94c1f96e6db?auto=format&fit=crop&q=80&w=800",
+    prepTime: "20 min"
   },
   {
     id: "bj-3",
     restaurantId: "rest-biryani-junction",
-    title: "Subz Paneer Dum Biryani",
-    description: "Garden fresh carrots, beans, peas, and paneer cubes cooked in dum rice with mint and fried onions.",
-    price: 280,
-    rating: 4.6,
-    category: "Dum Biryanis",
-    isVeg: true,
-    isAvailable: true,
-    image: "https://images.unsplash.com/photo-1642821373181-696a54913e93?auto=format&fit=crop&q=80&w=800",
-    prepTime: "20 min"
-  },
-  {
-    id: "bj-4",
-    restaurantId: "rest-biryani-junction",
-    title: "Chicken Seekh Kebab (4 pcs)",
-    description: "Minced chicken skewers seasoned with herbs, mint, and spices, roasted over red-hot charcoal.",
-    price: 290,
+    title: "Chicken 65 Spicy Bites",
+    description: "Crispy fried curry-leaf infused spicy boneless chicken cubes with green chili slices and lemon wedges.",
+    price: 240,
     rating: 4.8,
     category: "Starters & Kebabs",
     isVeg: false,
     isAvailable: true,
-    image: "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&q=80&w=800",
-    prepTime: "18 min"
+    image: "https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&q=80&w=800",
+    prepTime: "15 min"
   },
   {
-    id: "bj-5",
+    id: "bj-4",
     restaurantId: "rest-biryani-junction",
-    title: "Shahi Tukda",
-    description: "Crispy fried bread slices dipped in saffron sugar syrup and generously covered with thick rabri.",
+    title: "Shahi Tukda Royal Delight",
+    description: "Crispy ghee-fried bread slices steeped in thickened rabri, garnished with silver vark and almonds.",
     price: 130,
-    rating: 4.7,
+    rating: 4.8,
     category: "Desserts",
     isVeg: true,
     isAvailable: true,
@@ -370,9 +382,9 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
   {
     id: "bl-1",
     restaurantId: "rest-burger-lab",
-    title: "Double Smash Truffle Burger",
-    description: "Two smashed beef/chicken patties, melted sharp cheddar, truffle aioli, and caramelized onions on brioche.",
-    price: 340,
+    title: "The Ultimate Smash Cheeseburger",
+    description: "Double smashed tender patties, aged cheddar melt, caramelized onions, house truffle mayo in brioche bun.",
+    price: 290,
     rating: 4.8,
     category: "Recommended",
     isVeg: false,
@@ -384,36 +396,23 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
   {
     id: "bl-2",
     restaurantId: "rest-burger-lab",
-    title: "Crispy Peri Peri Chicken Burger",
-    description: "Fried crunchy chicken breast coated in fiery peri peri spice, crisp iceberg lettuce, and chipotle mayo.",
-    price: 290,
-    rating: 4.7,
-    category: "Burgers",
-    isVeg: false,
-    isAvailable: true,
-    image: "https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?auto=format&fit=crop&q=80&w=800",
-    prepTime: "15 min"
-  },
-  {
-    id: "bl-3",
-    restaurantId: "rest-burger-lab",
-    title: "Smoky BBQ Paneer Burger",
-    description: "Grilled marinated paneer steak with smokey barbecue glaze, pickled onions, and garlic ranch.",
-    price: 240,
+    title: "Crispy Truffle Veg Burger",
+    description: "Crunchy crumb-fried herbed vegetable & cheese patty, iceberg lettuce, pickled jalapeños and spicy secret sauce.",
+    price: 220,
     rating: 4.6,
     category: "Burgers",
     isVeg: true,
     isAvailable: true,
     image: "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&q=80&w=800",
-    prepTime: "12 min"
+    prepTime: "15 min"
   },
   {
-    id: "bl-4",
+    id: "bl-3",
     restaurantId: "rest-burger-lab",
-    title: "Truffle Parmesan Fries",
-    description: "Crispy skin-on potato fries tossed in truffle oil, fresh rosemary, and grated aged parmesan.",
-    price: 160,
-    rating: 4.8,
+    title: "Peri-Peri Seasoned Crinkle Fries",
+    description: "Thick cut crinkle potato fries tossed generously in African bird's eye chili seasoning with garlic dip.",
+    price: 130,
+    rating: 4.7,
     category: "Fries & Sides",
     isVeg: true,
     isAvailable: true,
@@ -421,40 +420,40 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
     prepTime: "10 min"
   },
   {
-    id: "bl-5",
+    id: "bl-4",
     restaurantId: "rest-burger-lab",
-    title: "Belgian Dark Chocolate Thickshake",
-    description: "Creamy artisanal shake made with 70% Belgian dark chocolate, rich milk, and whipped cream topping.",
+    title: "Nutella Belgian Chocolate Thickshake",
+    description: "Rich dark chocolate ice cream whipped with pure roasted hazelnut Nutella and crushed wafer crunch.",
     price: 180,
     rating: 4.9,
     category: "Beverages & Shakes",
     isVeg: true,
     isAvailable: true,
     image: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&q=80&w=800",
-    prepTime: "8 min"
+    prepTime: "5 min"
   },
 
   // 5. Green Bowl
   {
     id: "gb-1",
     restaurantId: "rest-green-bowl",
-    title: "Avocado & Edamame Quinoa Bowl",
-    description: "Organic tricolor quinoa, fresh Hass avocado, edamame beans, roasted chickpeas, and tahini lime dressing.",
-    price: 360,
-    rating: 4.9,
+    title: "Mediterranean Falafel Protein Bowl",
+    description: "Herbed baked falafels, roasted bell pepper quinoa, pickled cucumber ribbons, kalamata olives & creamy garlic tahini.",
+    price: 310,
+    rating: 4.8,
     category: "Recommended",
     isVeg: true,
     isAvailable: true,
     image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800",
     isPopular: true,
-    prepTime: "12 min"
+    prepTime: "15 min"
   },
   {
     id: "gb-2",
     restaurantId: "rest-green-bowl",
-    title: "Mediterranean Falafel Mezze Salad",
-    description: "Herbed chickpea falafels, kalamata olives, cucumber ribbons, feta cheese, and hummus vinaigrette.",
-    price: 310,
+    title: "Avocado Superfood Caesar Salad",
+    description: "Crisp romaine, Hass avocado slices, parmesan shavings, herb sourdough croutons, light Greek yogurt dressing.",
+    price: 290,
     rating: 4.7,
     category: "Salads",
     isVeg: true,
@@ -465,14 +464,14 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
   {
     id: "gb-3",
     restaurantId: "rest-green-bowl",
-    title: "Cold Pressed Valencia Orange Juice",
-    description: "100% pure raw cold-pressed orange juice without added sugar, water, or preservatives.",
-    price: 140,
+    title: "Cold Pressed Detox Green Juice (300ml)",
+    description: "Pure extracted celery, English cucumber, green apple, fresh mint and key lime. Zero added sugar.",
+    price: 150,
     rating: 4.8,
     category: "Cold Pressed Juices",
     isVeg: true,
     isAvailable: true,
-    image: "https://images.unsplash.com/photo-1600271886742-f049cd451bba?auto=format&fit=crop&q=80&w=800",
+    image: "https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&q=80&w=800",
     prepTime: "5 min"
   },
 
@@ -480,34 +479,20 @@ export const MOCK_MENU_ITEMS: FoodItem[] = [
   {
     id: "ch-1",
     restaurantId: "rest-curry-house",
-    title: "Homestyle Kadai Chicken Feast",
-    description: "Tender chicken cooked with bell peppers, freshly pounded coriander seeds, and whole dried red chilies.",
-    price: 280,
+    title: "Homestyle Dal Tadka Bowl",
+    description: "Yellow arhar lentils tempered with cumin, crushed garlic, whole red chilies, fresh coriander and jeera rice.",
+    price: 210,
     rating: 4.7,
     category: "Recommended",
-    isVeg: false,
-    isAvailable: true,
-    image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&q=80&w=800",
-    isPopular: true,
-    prepTime: "20 min"
-  },
-  {
-    id: "ch-2",
-    restaurantId: "rest-curry-house",
-    title: "Punjabi Dhaba Dal Tadka",
-    description: "Yellow toor dal tempered with desi ghee, cumin, fresh garlic, green chilies, and coriander.",
-    price: 190,
-    rating: 4.8,
-    category: "Main Course",
     isVeg: true,
     isAvailable: true,
     image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&q=80&w=800",
     prepTime: "15 min"
   },
   {
-    id: "ch-3",
+    id: "ch-2",
     restaurantId: "rest-curry-house",
-    title: "Royal Executive Thali (Veg)",
+    title: "Royal Executive Veg Thali",
     description: "Paneer butter masala, dal tadka, mix veg, 3 butter rotis, jeera rice, salad, pickle, and gulab jamun.",
     price: 310,
     rating: 4.9,
@@ -525,6 +510,8 @@ export const MOCK_ADDRESSES: Address[] = [
     id: "addr-1",
     label: "Home",
     text: "Flat 402, Royal Palms, Lavelle Road, Bengaluru - 560001",
+    flatBuilding: "Flat 402, Tower B",
+    landmark: "Near UB City",
     lat: 12.9698,
     lng: 77.5972,
     isDefault: true
@@ -533,6 +520,8 @@ export const MOCK_ADDRESSES: Address[] = [
     id: "addr-2",
     label: "Work / Office",
     text: "Level 11, WeWork Galaxy, Residency Rd, Bengaluru - 560025",
+    flatBuilding: "Level 11, Desk 42",
+    landmark: "Opposite Ritz Carlton",
     lat: 12.9708,
     lng: 77.6015
   },
@@ -540,6 +529,8 @@ export const MOCK_ADDRESSES: Address[] = [
     id: "addr-3",
     label: "Koramangala Studio",
     text: "Building 12, 80 Feet Rd, Koramangala 4th Block, Bengaluru - 560034",
+    flatBuilding: "2nd Floor",
+    landmark: "Above Blue Tokai",
     lat: 12.9343,
     lng: 77.6253
   },
@@ -547,10 +538,21 @@ export const MOCK_ADDRESSES: Address[] = [
     id: "addr-4",
     label: "Indiranagar Flat",
     text: "Flat B, Metro Heights, 100 Feet Rd, Indiranagar, Bengaluru - 560038",
+    flatBuilding: "Block A",
+    landmark: "Next to 12th Main Signal",
     lat: 12.9784,
     lng: 77.6408
   }
 ];
+
+export const MOCK_USER: UserProfile = {
+  id: "usr-fairbyte-1",
+  name: "Pooja Bhusani",
+  email: "poojabhusani20@gmail.com",
+  phone: "+91 98765 43210",
+  avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200",
+  isLoggedIn: true
+};
 
 export const MOCK_DELIVERY_PARTNER: DeliveryPartner = {
   name: "Alex",
@@ -564,15 +566,225 @@ export const MOCK_DELIVERY_PARTNER: DeliveryPartner = {
   currentLng: 77.5946
 };
 
-// Helper to compute FairByte transparent billing + illustrative traditional comparison
-export function computeBilling(subtotal: number, deliveryFee: number = 48): BillingBreakdown {
-  const cgst = 0; // FairByte displays menu price as inclusive or zero hidden taxes
-  const sgst = 0;
+export const MOCK_COUPONS: Coupon[] = [
+  {
+    code: "FAIRFREE",
+    title: "Free Delivery Above ₹299",
+    description: "Enjoy zero delivery fee on orders ₹299 and above.",
+    discountType: "free_delivery",
+    discountValue: 48,
+    minOrder: 299
+  },
+  {
+    code: "WEEKEND15",
+    title: "15% Off Your Meal",
+    description: "Get 15% discount on food subtotal up to ₹75.",
+    discountType: "percentage",
+    discountValue: 15,
+    minOrder: 350
+  },
+  {
+    code: "WELCOMEFB",
+    title: "Flat ₹50 Off Welcome Treat",
+    description: "Flat ₹50 savings on your FairByte order above ₹250.",
+    discountType: "fixed",
+    discountValue: 50,
+    minOrder: 250
+  }
+];
+
+export const MOCK_PAST_ORDERS: Order[] = [
+  {
+    id: "FB-1982",
+    restaurantId: "rest-spice-route",
+    restaurantName: "Spice Route",
+    restaurantImage: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&q=80&w=800",
+    items: [
+      {
+        item: MOCK_MENU_ITEMS[0], // Butter chicken bowl
+        restaurantId: "rest-spice-route",
+        restaurantName: "Spice Route",
+        quantity: 1
+      },
+      {
+        item: MOCK_MENU_ITEMS[7], // Garlic naan
+        restaurantId: "rest-spice-route",
+        restaurantName: "Spice Route",
+        quantity: 2
+      }
+    ],
+    billing: {
+      subtotal: 510,
+      deliveryFee: 48,
+      platformFee: 0,
+      serviceFee: 0,
+      cgst: 0,
+      sgst: 0,
+      discount: 0,
+      grandTotal: 558,
+      traditionalComparison: {
+        foodPrice: 510,
+        platformFee: 15,
+        serviceFee: 45,
+        deliveryFee: 48,
+        surgeFee: 30,
+        traditionalTotal: 648,
+        fairByteTotal: 558,
+        savings: 90
+      }
+    },
+    status: "DELIVERED",
+    address: MOCK_ADDRESSES[0],
+    deliveryPartner: MOCK_DELIVERY_PARTNER,
+    createdAt: "Yesterday, 8:15 PM",
+    estimatedDeliveryMin: "Delivered in 28 min",
+    paymentMethod: "UPI (Google Pay)",
+    paymentStatus: "PAID"
+  },
+  {
+    id: "FB-1840",
+    restaurantId: "rest-dosa-district",
+    restaurantName: "Dosa District",
+    restaurantImage: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?auto=format&fit=crop&q=80&w=800",
+    items: [
+      {
+        item: MOCK_MENU_ITEMS[10], // Mysore masala dosa
+        restaurantId: "rest-dosa-district",
+        restaurantName: "Dosa District",
+        quantity: 2
+      },
+      {
+        item: MOCK_MENU_ITEMS[14], // Filter coffee
+        restaurantId: "rest-dosa-district",
+        restaurantName: "Dosa District",
+        quantity: 2
+      }
+    ],
+    billing: {
+      subtotal: 420,
+      deliveryFee: 35,
+      platformFee: 0,
+      serviceFee: 0,
+      cgst: 0,
+      sgst: 0,
+      discount: 35,
+      grandTotal: 420,
+      traditionalComparison: {
+        foodPrice: 420,
+        platformFee: 15,
+        serviceFee: 35,
+        deliveryFee: 35,
+        surgeFee: 20,
+        traditionalTotal: 525,
+        fairByteTotal: 420,
+        savings: 105
+      }
+    },
+    status: "DELIVERED",
+    address: MOCK_ADDRESSES[1],
+    deliveryPartner: MOCK_DELIVERY_PARTNER,
+    createdAt: "19 Aug, 9:30 AM",
+    estimatedDeliveryMin: "Delivered in 22 min",
+    paymentMethod: "Credit Card (HDFC)",
+    paymentStatus: "PAID"
+  }
+];
+
+export const MOCK_NOTIFICATIONS: AppNotification[] = [
+  {
+    id: "notif-1",
+    title: "Order Delivered 🎉",
+    message: "Your order FB-1982 from Spice Route was delivered by Alex.",
+    timeAgo: "Yesterday",
+    read: true,
+    type: "order",
+    orderId: "FB-1982"
+  },
+  {
+    id: "notif-2",
+    title: "Transparent Pricing Verified ✨",
+    message: "You saved ₹90 on your last order with FairByte zero platform fees!",
+    timeAgo: "Yesterday",
+    read: false,
+    type: "system"
+  },
+  {
+    id: "notif-3",
+    title: "Weekend Special: Free Delivery 🛵",
+    message: "Use code FAIRFREE on orders above ₹299 this weekend.",
+    timeAgo: "2 days ago",
+    read: false,
+    type: "offer"
+  }
+];
+
+export const MOCK_FAQS: FAQItem[] = [
+  {
+    id: "faq-1",
+    question: "How does FairByte charge true restaurant menu prices?",
+    answer: "Unlike traditional food delivery apps that mark up food items by 15% to 30%, FairByte partners directly with kitchens and lists their in-store menu prices without hidden menu inflation.",
+    category: "pricing"
+  },
+  {
+    id: "faq-2",
+    question: "Why does FairByte charge ₹0 platform fee and ₹0 service fee?",
+    answer: "FairByte believes delivery logistics should be straightforward. You pay the restaurant for their food, and pay a fair, transparent delivery fee directly to the courier. No random platform convenience or surge fees.",
+    category: "pricing"
+  },
+  {
+    id: "faq-3",
+    question: "How is the delivery fee calculated?",
+    answer: "The delivery fee is calculated purely based on real-time distance from the restaurant to your address (typically base ₹35 + ₹12/km), with zero artificial surge markups.",
+    category: "delivery"
+  },
+  {
+    id: "faq-4",
+    question: "Can I order from multiple restaurants at once?",
+    answer: "To ensure your food arrives hot and fresh, each delivery order is fulfilled from a single restaurant kitchen per run.",
+    category: "orders"
+  },
+  {
+    id: "faq-5",
+    question: "What is FairByte's cancellation and refund policy?",
+    answer: "If the restaurant has not yet accepted your order, you can cancel instantly for a full 100% refund. In case of any missing or damaged item, our 24/7 in-app support resolves refunds within minutes.",
+    category: "refunds"
+  }
+];
+
+export const MOCK_SUPPORT_INITIAL_MESSAGES: SupportChatMessage[] = [
+  {
+    id: "msg-1",
+    sender: "support",
+    text: "Hello! Welcome to FairByte Support. How can we help you today with your orders, pricing or delivery?",
+    timestamp: "Just now"
+  }
+];
+
+// Helper to compute FairByte transparent billing + illustrative traditional comparison + coupon discount
+export function computeBilling(
+  subtotal: number, 
+  deliveryFee: number = 48,
+  coupon: Coupon | null = null
+): BillingBreakdown {
+  let discount = 0;
+  if (coupon && subtotal >= coupon.minOrder) {
+    if (coupon.discountType === "free_delivery") {
+      discount = deliveryFee;
+    } else if (coupon.discountType === "fixed") {
+      discount = coupon.discountValue;
+    } else if (coupon.discountType === "percentage") {
+      discount = Math.min(75, Math.round((subtotal * coupon.discountValue) / 100));
+    }
+  }
+
+  const effectiveDelivery = coupon?.discountType === "free_delivery" ? 0 : deliveryFee;
   const platformFee = 0; // FairByte zero platform fee
   const serviceFee = 0;  // FairByte zero service fee
-  const grandTotal = subtotal + deliveryFee;
+  const cgst = 0;        // Included in direct restaurant menu price
+  const sgst = 0;
+  const grandTotal = Math.max(0, subtotal + effectiveDelivery - (coupon?.discountType !== "free_delivery" ? discount : 0));
 
-  // Traditional delivery markup simulation for illustrative comparison:
+  // Illustrative traditional delivery simulation:
   // e.g. for subtotal 320: Additional charges ~90 -> total 410, saving 42
   const traditionalPlatformFee = 15;
   const traditionalServiceFee = Math.max(25, Math.round(subtotal * 0.08));
@@ -594,12 +806,14 @@ export function computeBilling(subtotal: number, deliveryFee: number = 48): Bill
 
   return {
     subtotal,
-    deliveryFee,
+    deliveryFee: effectiveDelivery,
     platformFee,
     serviceFee,
     cgst,
     sgst,
+    discount,
     grandTotal,
+    appliedCoupon: coupon,
     traditionalComparison
   };
 }

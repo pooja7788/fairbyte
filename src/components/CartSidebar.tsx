@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "motion/react";
 import { 
   ShoppingCart, 
@@ -12,9 +12,14 @@ import {
   TrendingDown, 
   Bike,
   CheckCircle2,
-  Info
+  Tag,
+  Receipt,
+  Utensils,
+  Eye,
+  AlertCircle
 } from "lucide-react";
-import { CartItem, BillingBreakdown, FoodItem } from "../types";
+import { CartItem, BillingBreakdown, FoodItem, Coupon } from "../types";
+import { MOCK_COUPONS } from "../mockData";
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -25,6 +30,7 @@ interface CartSidebarProps {
   onDecrement: (item: FoodItem) => void;
   onClear: () => void;
   onProceed: () => void;
+  onApplyCoupon: (coupon: Coupon | null) => void;
 }
 
 export default function CartSidebar({
@@ -35,11 +41,39 @@ export default function CartSidebar({
   onIncrement,
   onDecrement,
   onClear,
-  onProceed
+  onProceed,
+  onApplyCoupon
 }: CartSidebarProps) {
+  const [couponInput, setCouponInput] = useState("");
+  const [couponError, setCouponError] = useState("");
+
   if (!isOpen) return null;
 
   const totalItemCount = items.reduce((acc, match) => acc + match.quantity, 0);
+
+  const handleApplyCouponCode = (codeToApply?: string) => {
+    const code = (codeToApply || couponInput).trim().toUpperCase();
+    const found = MOCK_COUPONS.find(c => c.code === code);
+
+    if (!found) {
+      setCouponError("Invalid promo code");
+      return;
+    }
+
+    if (billing && billing.subtotal < found.minOrder) {
+      setCouponError(`Minimum order of ₹${found.minOrder} required for ${found.code}`);
+      return;
+    }
+
+    setCouponError("");
+    onApplyCoupon(found);
+  };
+
+  const handleRemoveCoupon = () => {
+    onApplyCoupon(null);
+    setCouponInput("");
+    setCouponError("");
+  };
 
   return (
     <>
@@ -55,7 +89,7 @@ export default function CartSidebar({
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white border-l border-zinc-200 shadow-2xl z-50 flex flex-col h-full overflow-hidden"
+        className="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-white border-l border-zinc-200 shadow-2xl z-50 flex flex-col h-full overflow-hidden"
       >
         {/* Header section */}
         <div className="p-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/70">
@@ -64,11 +98,11 @@ export default function CartSidebar({
               <ShoppingCart className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-black text-zinc-950 tracking-tight text-base">
+              <h3 className="font-black text-zinc-950 tracking-tight text-base font-sans">
                 Your FairByte Order
               </h3>
               <p className="text-[10px] text-zinc-500 font-medium">
-                Direct restaurant pricing • No hidden markups
+                Direct restaurant pricing • Transparent delivery
               </p>
             </div>
           </div>
@@ -96,17 +130,23 @@ export default function CartSidebar({
               <div className="space-y-1">
                 <p className="font-extrabold text-zinc-900 text-base">Your cart is empty</p>
                 <p className="text-xs text-zinc-500 max-w-xs">
-                  Browse through top local restaurants and order delicious food at true menu prices.
+                  Add something delicious from our partner kitchens to get started.
                 </p>
               </div>
+              <button
+                onClick={onClose}
+                className="cursor-pointer bg-emerald-600 text-zinc-950 font-bold px-5 py-2.5 rounded-2xl text-xs shadow-xs"
+              >
+                Explore Restaurants
+              </button>
             </div>
           ) : (
-            <div className="space-y-5">
+            <div className="space-y-6">
               
               {/* Active Items Header */}
               <div className="flex justify-between items-center text-xs">
                 <span className="text-zinc-400 font-extrabold tracking-wider uppercase">
-                  Order Items
+                  Selected Food Items
                 </span>
                 <button
                   onClick={onClear}
@@ -118,55 +158,57 @@ export default function CartSidebar({
               </div>
 
               {/* Items List */}
-              <div className="divide-y divide-zinc-100">
+              <div className="divide-y divide-zinc-100 bg-zinc-50/50 p-3 rounded-2xl border border-zinc-100">
                 {items.map(({ item, quantity, restaurantName }) => (
-                  <div key={item.id} className="py-3.5 flex gap-3 items-center">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-14 h-14 rounded-2xl object-cover border border-zinc-200/60 shrink-0"
-                    />
+                  <div key={item.id} className="py-3 flex gap-3 items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-12 h-12 rounded-xl object-cover border border-zinc-200/60 shrink-0"
+                      />
 
-                    <div className="flex-grow min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className={`w-2 h-2 rounded-full shrink-0 ${
-                            item.isVeg ? "bg-emerald-500" : "bg-red-500"
-                          }`}
-                        />
-                        <h4 className="font-bold text-xs text-zinc-900 truncate">
-                          {item.title}
-                        </h4>
-                      </div>
-                      
-                      <p className="text-[10px] text-zinc-400 truncate mt-0.5">
-                        {restaurantName}
-                      </p>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`w-2 h-2 rounded-full shrink-0 ${
+                              item.isVeg ? "bg-emerald-500" : "bg-red-500"
+                            }`}
+                          />
+                          <h4 className="font-bold text-xs text-zinc-900 truncate max-w-[180px]">
+                            {item.title}
+                          </h4>
+                        </div>
+                        
+                        <p className="text-[10px] text-zinc-400 truncate mt-0.5">
+                          {restaurantName}
+                        </p>
 
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs font-black text-zinc-950 font-sans">
-                          ₹{item.price * quantity}
-                        </span>
-                        <span className="text-[10px] text-zinc-400 font-mono">
-                          (₹{item.price} each)
-                        </span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs font-black text-zinc-950 font-sans">
+                            ₹{item.price * quantity}
+                          </span>
+                          <span className="text-[10px] text-zinc-400">
+                            (₹{item.price} × {quantity})
+                          </span>
+                        </div>
                       </div>
                     </div>
 
                     {/* Quantity Selector */}
-                    <div className="bg-zinc-100 border border-zinc-200/80 rounded-xl flex items-center p-1 font-mono shrink-0">
+                    <div className="bg-white border border-zinc-200/80 rounded-xl flex items-center p-1 font-mono shrink-0 shadow-2xs">
                       <button
                         onClick={() => onDecrement(item)}
-                        className="cursor-pointer p-1 text-zinc-600 hover:text-zinc-950 bg-white border border-zinc-200/50 rounded-lg shadow-2xs hover:shadow-xs transition-all active:scale-95"
+                        className="cursor-pointer p-1 text-zinc-600 hover:text-zinc-950 rounded-lg hover:bg-zinc-100 transition-all active:scale-95"
                       >
                         <Minus className="w-3 h-3" />
                       </button>
-                      <span className="text-xs font-extrabold text-zinc-900 px-2.5 leading-none">
+                      <span className="text-xs font-black text-zinc-900 px-2 leading-none">
                         {quantity}
                       </span>
                       <button
                         onClick={() => onIncrement(item)}
-                        className="cursor-pointer p-1 text-zinc-600 hover:text-zinc-950 bg-white border border-zinc-200/50 rounded-lg shadow-2xs hover:shadow-xs transition-all active:scale-95"
+                        className="cursor-pointer p-1 text-zinc-600 hover:text-zinc-950 rounded-lg hover:bg-zinc-100 transition-all active:scale-95"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
@@ -175,48 +217,206 @@ export default function CartSidebar({
                 ))}
               </div>
 
-              {/* Strong Transparency Banner Card */}
-              <div className="bg-emerald-950 text-white p-4.5 rounded-2xl border border-emerald-800/40 space-y-2 relative overflow-hidden">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  <h4 className="font-extrabold text-xs text-emerald-300">
-                    "You see exactly what you're paying for."
-                  </h4>
+              {/* COUPON INPUT SECTION */}
+              <div className="bg-zinc-50 border border-zinc-200/80 p-3.5 rounded-2xl space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-zinc-800">
+                  <span className="flex items-center gap-1.5">
+                    <Tag className="w-4 h-4 text-emerald-600" />
+                    <span>Apply Promo Code</span>
+                  </span>
+                  {billing?.appliedCoupon && (
+                    <button
+                      onClick={handleRemoveCoupon}
+                      className="cursor-pointer text-red-600 text-[11px] hover:underline"
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
-                <p className="text-[11px] text-zinc-300 leading-relaxed">
-                  Restaurant menu price + transparent delivery. No surprise platform charges in this demo.
-                </p>
+
+                {billing?.appliedCoupon ? (
+                  <div className="bg-emerald-50 border border-emerald-200 p-2 rounded-xl flex items-center justify-between text-xs text-emerald-900 font-bold">
+                    <span>Applied: {billing.appliedCoupon.code}</span>
+                    <span>Saved ₹{billing.discount}</span>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      placeholder="Enter FAIRFREE or WEEKEND15"
+                      className="flex-1 bg-white border border-zinc-200 rounded-xl px-3 py-1.5 text-xs uppercase font-mono font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                    <button
+                      onClick={() => handleApplyCouponCode()}
+                      className="cursor-pointer bg-zinc-950 text-white px-4 py-1.5 rounded-xl text-xs font-bold hover:bg-zinc-800"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                )}
+
+                {couponError && (
+                  <p className="text-[11px] text-red-600 font-medium">{couponError}</p>
+                )}
               </div>
 
-              {/* Comparative Savings Pill if computed */}
-              {billing?.traditionalComparison && (
-                <div className="bg-amber-50 border border-amber-200/80 p-3.5 rounded-2xl flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <TrendingDown className="w-4 h-4 text-amber-600 shrink-0" />
-                    <div>
-                      <span className="font-bold text-amber-900 block leading-tight">
-                        You save ₹{billing.traditionalComparison.savings} on this order
-                      </span>
-                      <span className="text-[10px] text-amber-700 font-medium">
-                        vs traditional platform fees (₹{billing.traditionalComparison.traditionalTotal})
-                      </span>
+              {/* ------------------------------------------------------------- */}
+              {/* SECTION 10: FAIRBYTE TRANSPARENT PRICE COMPARISON */}
+              {/* "See the difference" Card */}
+              {/* ------------------------------------------------------------- */}
+              {billing && billing.traditionalComparison && (
+                <div className="bg-gradient-to-br from-zinc-950 via-zinc-900 to-emerald-950 text-white rounded-3xl p-5 border border-emerald-500/30 shadow-xl space-y-4">
+                  
+                  <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                    <div className="flex items-center gap-2">
+                      <TrendingDown className="w-5 h-5 text-emerald-400" />
+                      <div>
+                        <h3 className="text-sm font-black text-white font-sans tracking-tight">
+                          See the difference
+                        </h3>
+                        <span className="text-[10px] text-zinc-400 font-medium">
+                          Illustrative comparison
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-emerald-500 text-zinc-950 text-xs font-black px-2.5 py-1 rounded-xl shadow-xs">
+                      You save ₹{billing.traditionalComparison.savings}
                     </div>
                   </div>
-                  <span className="bg-amber-500 text-zinc-950 text-[10px] font-black uppercase px-2 py-1 rounded-lg shrink-0">
-                    Fair Deal
-                  </span>
+
+                  {/* Side-by-Side Comparison Box */}
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    
+                    {/* Traditional Delivery Side */}
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 space-y-2">
+                      <span className="text-[11px] font-bold text-zinc-400 block uppercase tracking-wider">
+                        Traditional App
+                      </span>
+                      <div className="space-y-1 text-zinc-300 text-[11px]">
+                        <div className="flex justify-between">
+                          <span>Food:</span>
+                          <span className="font-mono">₹{billing.traditionalComparison.foodPrice}</span>
+                        </div>
+                        <div className="flex justify-between text-red-300">
+                          <span>Markups:</span>
+                          <span className="font-mono">+₹{billing.traditionalComparison.traditionalTotal - billing.traditionalComparison.foodPrice}</span>
+                        </div>
+                      </div>
+                      <div className="pt-2 border-t border-white/10 flex justify-between font-bold text-zinc-200">
+                        <span>Total:</span>
+                        <span className="font-mono text-sm text-red-400 line-through">
+                          ₹{billing.traditionalComparison.traditionalTotal}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* FairByte Side */}
+                    <div className="bg-emerald-900/40 border border-emerald-500/40 rounded-2xl p-3.5 space-y-2 relative overflow-hidden">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-black text-emerald-300 uppercase tracking-wider">
+                          FairByte
+                        </span>
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                      </div>
+                      <div className="space-y-1 text-zinc-200 text-[11px]">
+                        <div className="flex justify-between">
+                          <span>Food:</span>
+                          <span className="font-mono">₹{billing.subtotal}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Delivery:</span>
+                          <span className="font-mono">₹{billing.deliveryFee}</span>
+                        </div>
+                        <div className="flex justify-between text-emerald-400 font-bold">
+                          <span>Platform:</span>
+                          <span className="font-mono">₹0</span>
+                        </div>
+                      </div>
+                      <div className="pt-2 border-t border-emerald-500/30 flex justify-between font-black text-emerald-300">
+                        <span>Total:</span>
+                        <span className="font-mono text-base text-emerald-400">
+                          ₹{billing.grandTotal}
+                        </span>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Clarification Messaging */}
+                  <div className="bg-black/40 p-3 rounded-2xl border border-white/5 space-y-1">
+                    <p className="font-black text-xs text-emerald-300 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>"You see exactly what you're paying for."</span>
+                    </p>
+                    <p className="text-[11px] text-zinc-300 leading-relaxed">
+                      Restaurant menu price + transparent delivery. No surprise platform charges in this demo.
+                    </p>
+                  </div>
+
                 </div>
               )}
+
+              {/* ------------------------------------------------------------- */}
+              {/* SECTION 11: TRANSPARENT PRICING 3 PILLARS */}
+              {/* ------------------------------------------------------------- */}
+              <div className="space-y-2.5 pt-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400 block">
+                  How FairByte Pricing Works
+                </span>
+
+                <div className="grid grid-cols-1 gap-2.5">
+                  <div className="bg-white border border-zinc-200 p-3 rounded-2xl flex items-start gap-3 shadow-2xs">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0">
+                      1
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs text-zinc-950">Restaurant Menu Price</h4>
+                      <p className="text-[11px] text-zinc-500 leading-tight mt-0.5">
+                        The food price shown comes directly from the restaurant's menu.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-zinc-200 p-3 rounded-2xl flex items-start gap-3 shadow-2xs">
+                    <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold text-xs shrink-0">
+                      2
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs text-zinc-950">Transparent Delivery</h4>
+                      <p className="text-[11px] text-zinc-500 leading-tight mt-0.5">
+                        The delivery cost is shown separately before checkout.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-zinc-200 p-3 rounded-2xl flex items-start gap-3 shadow-2xs">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
+                      3
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs text-zinc-950">Clear Final Price</h4>
+                      <p className="text-[11px] text-zinc-500 leading-tight mt-0.5">
+                        Customers see the complete price before placing the order.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
             </div>
           )}
         </div>
 
-        {/* Transparent Billing Breakdown & Proceed Button */}
+        {/* ------------------------------------------------------------- */}
+        {/* SECTION 9: BILLING BREAKDOWN & CHECKOUT ACTION */}
+        {/* ------------------------------------------------------------- */}
         {items.length > 0 && billing && (
           <div className="p-5 bg-zinc-50 border-t border-zinc-200 space-y-4">
             
-            <div className="space-y-2.5 text-xs">
+            <div className="space-y-2 text-xs">
               <div className="flex justify-between items-center text-zinc-700">
                 <span>Food Subtotal</span>
                 <span className="font-bold text-zinc-950 font-mono">₹{billing.subtotal}</span>
@@ -227,7 +427,9 @@ export default function CartSidebar({
                   <Bike className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Transparent Delivery</span>
                 </span>
-                <span className="font-bold text-zinc-950 font-mono">₹{billing.deliveryFee}</span>
+                <span className="font-bold text-zinc-950 font-mono">
+                  {billing.deliveryFee === 0 ? "FREE" : `₹${billing.deliveryFee}`}
+                </span>
               </div>
 
               <div className="flex justify-between items-center text-emerald-700">
@@ -236,7 +438,7 @@ export default function CartSidebar({
                   <span>Platform Fee</span>
                 </span>
                 <span className="font-bold font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">
-                  ₹0 FREE
+                  ₹0
                 </span>
               </div>
 
@@ -246,9 +448,16 @@ export default function CartSidebar({
                   <span>Service Fee</span>
                 </span>
                 <span className="font-bold font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">
-                  ₹0 ZERO
+                  ₹0
                 </span>
               </div>
+
+              {billing.discount > 0 && (
+                <div className="flex justify-between items-center text-emerald-700 font-bold">
+                  <span>Coupon Discount ({billing.appliedCoupon?.code})</span>
+                  <span className="font-mono">-₹{billing.discount}</span>
+                </div>
+              )}
 
               <div className="border-t-2 border-zinc-200 pt-3 flex justify-between items-center">
                 <div>

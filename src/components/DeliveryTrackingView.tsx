@@ -2,460 +2,349 @@ import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { 
   ArrowLeft, 
-  Clock, 
   Bike, 
-  User, 
-  Phone, 
-  CheckCircle2, 
   MapPin, 
-  Navigation, 
-  Play, 
-  FastForward, 
-  RotateCcw, 
-  ShieldCheck,
-  ChevronDown,
-  ChevronUp,
+  Phone, 
+  MessageSquare, 
+  Star, 
+  Clock, 
+  CheckCircle2, 
+  ShieldCheck, 
   Sparkles,
-  UtensilsCrossed,
-  Home
+  RefreshCw,
+  Navigation
 } from "lucide-react";
-import { Order, OrderStatus } from "../types";
+import { Order } from "../types";
 
 interface DeliveryTrackingViewProps {
   order: Order;
   onBackToHome: () => void;
+  onBackToOrders: () => void;
 }
 
-const TIMELINE_STEPS: { status: OrderStatus; label: string; description: string }[] = [
-  { status: "PLACED", label: "Order placed", description: "Transmitted to restaurant at menu price" },
-  { status: "ACCEPTED", label: "Restaurant accepted", description: "Kitchen verified ticket order" },
-  { status: "PREPARING", label: "Preparing your food", description: "Chef is cooking fresh ingredients" },
-  { status: "RIDER_ASSIGNED", label: "Rider picking up", description: "Alex arrived at the restaurant counter" },
-  { status: "ON_THE_WAY", label: "On the way", description: "Courier is en route to your address" },
-  { status: "DELIVERED", label: "Delivered", description: "Enjoy your fresh meal with zero surprise fees!" }
+const TIMELINE_STEPS = [
+  { id: 0, title: "Order placed", desc: "Sent to kitchen directly at menu price" },
+  { id: 1, title: "Restaurant accepted", desc: "Kitchen started fresh prep" },
+  { id: 2, title: "Preparing your food", desc: "Chef is packaging your dishes" },
+  { id: 3, title: "Rider picking up", desc: "Alex is at the kitchen" },
+  { id: 4, title: "On the way", desc: "En route to your location" },
+  { id: 5, title: "Delivered", desc: "Handed over at your door" }
 ];
 
 export default function DeliveryTrackingView({
   order,
-  onBackToHome
+  onBackToHome,
+  onBackToOrders
 }: DeliveryTrackingViewProps) {
-  const [currentStepIndex, setCurrentStepIndex] = useState<number>(2); // Default at "Preparing your food"
-  const [etaMinutes, setEtaMinutes] = useState<number>(12);
-  const [isAutoSimulating, setIsAutoSimulating] = useState<boolean>(true);
-  const [showOrderSummary, setShowOrderSummary] = useState<boolean>(false);
-  const [simProgress, setSimProgress] = useState<number>(0.4); // 0 to 1 along route
+  const [currentStep, setCurrentStep] = useState(order.orderTimelineStep ?? 2);
+  const [callSimulated, setCallSimulated] = useState(false);
+  const [msgSimulated, setMsgSimulated] = useState(false);
 
-  // Step progression auto-timer for live presentation feel
+  // Auto-advance tracking simulation if desired
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isAutoSimulating && currentStepIndex < TIMELINE_STEPS.length - 1) {
-      interval = setInterval(() => {
-        setCurrentStepIndex((prev) => {
-          const next = prev + 1;
-          if (next === 3) setEtaMinutes(9);
-          if (next === 4) setEtaMinutes(4);
-          if (next === 5) setEtaMinutes(0);
-          return next;
-        });
-      }, 7000); // Advances step every 7s
-    }
-    return () => clearInterval(interval);
-  }, [isAutoSimulating, currentStepIndex]);
+    const timer = setInterval(() => {
+      setCurrentStep(prev => {
+        if (prev < 4) return prev + 1;
+        return prev;
+      });
+    }, 18000);
+    return () => clearInterval(timer);
+  }, []);
 
-  // Update route progress based on step
-  useEffect(() => {
-    if (currentStepIndex === 0) setSimProgress(0.05);
-    else if (currentStepIndex === 1) setSimProgress(0.15);
-    else if (currentStepIndex === 2) setSimProgress(0.35);
-    else if (currentStepIndex === 3) setSimProgress(0.55);
-    else if (currentStepIndex === 4) setSimProgress(0.85);
-    else if (currentStepIndex === 5) setSimProgress(1.0);
-  }, [currentStepIndex]);
+  const handleSimulateCall = () => {
+    setCallSimulated(true);
+    setTimeout(() => setCallSimulated(false), 3000);
+  };
 
-  // Draw animated map
-  useEffect(() => {
-    const canvas = document.getElementById("tracking-map-canvas") as HTMLCanvasElement;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const w = canvas.width;
-    const h = canvas.height;
-
-    ctx.clearRect(0, 0, w, h);
-
-    // Canvas background
-    ctx.fillStyle = "#18181b"; // Dark mode sleek map
-    ctx.fillRect(0, 0, w, h);
-
-    // Grid road network
-    ctx.strokeStyle = "#27272a";
-    ctx.lineWidth = 8;
-    ctx.beginPath();
-    ctx.moveTo(0, h * 0.3); ctx.lineTo(w, h * 0.3);
-    ctx.moveTo(0, h * 0.7); ctx.lineTo(w, h * 0.7);
-    ctx.moveTo(w * 0.25, 0); ctx.lineTo(w * 0.25, h);
-    ctx.moveTo(w * 0.75, 0); ctx.lineTo(w * 0.75, h);
-    ctx.stroke();
-
-    // Curved primary delivery road
-    const startX = w * 0.15;
-    const startY = h * 0.65;
-    const endX = w * 0.85;
-    const endY = h * 0.35;
-
-    const ctrlX1 = w * 0.35;
-    const ctrlY1 = h * 0.25;
-    const ctrlX2 = w * 0.65;
-    const ctrlY2 = h * 0.85;
-
-    // Road casing
-    ctx.strokeStyle = "#3f3f46";
-    ctx.lineWidth = 14;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.bezierCurveTo(ctrlX1, ctrlY1, ctrlX2, ctrlY2, endX, endY);
-    ctx.stroke();
-
-    // Road fill
-    ctx.strokeStyle = "#10b981"; // Emerald path
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.bezierCurveTo(ctrlX1, ctrlY1, ctrlX2, ctrlY2, endX, endY);
-    ctx.stroke();
-
-    // Landmark text labels
-    ctx.font = "bold 9px monospace";
-    ctx.fillStyle = "#71717a";
-    ctx.fillText("INDIRANAGAR KITCHEN", startX - 20, startY + 28);
-    ctx.fillText("CUSTOMER GEOFENCE", endX - 50, endY - 24);
-
-    // 1. Restaurant Start Pin
-    ctx.fillStyle = "#059669";
-    ctx.beginPath();
-    ctx.arc(startX, startY, 8, 0, 2 * Math.PI);
-    ctx.fill();
-
-    // 2. Customer End Pin
-    ctx.fillStyle = "#f59e0b";
-    ctx.beginPath();
-    ctx.arc(endX, endY, 8, 0, 2 * Math.PI);
-    ctx.fill();
-
-    // End Pin Pulse Halo
-    ctx.strokeStyle = "rgba(245, 158, 11, 0.4)";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(endX, endY, 14, 0, 2 * Math.PI);
-    ctx.stroke();
-
-    // Compute Rider Position along Bezier curve
-    const t = simProgress;
-    const riderX = Math.pow(1 - t, 3) * startX + 3 * Math.pow(1 - t, 2) * t * ctrlX1 + 3 * (1 - t) * Math.pow(t, 2) * ctrlX2 + Math.pow(t, 3) * endX;
-    const riderY = Math.pow(1 - t, 3) * startY + 3 * Math.pow(1 - t, 2) * t * ctrlY1 + 3 * (1 - t) * Math.pow(t, 2) * ctrlY2 + Math.pow(t, 3) * endY;
-
-    // Draw Rider Circle Marker
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = "#10b981";
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath();
-    ctx.arc(riderX, riderY, 10, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // Inner rider dot
-    ctx.fillStyle = "#059669";
-    ctx.beginPath();
-    ctx.arc(riderX, riderY, 5, 0, 2 * Math.PI);
-    ctx.fill();
-
-    // Floating tooltip tag above rider
-    ctx.fillStyle = "#09090b";
-    ctx.fillRect(riderX - 35, riderY - 26, 70, 14);
-    ctx.strokeStyle = "#10b981";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(riderX - 35, riderY - 26, 70, 14);
-
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 8px sans-serif";
-    ctx.fillText("ALEX • ATHER", riderX - 30, riderY - 16);
-
-  }, [simProgress]);
-
-  const activeStep = TIMELINE_STEPS[currentStepIndex];
+  const handleSimulateMsg = () => {
+    setMsgSimulated(true);
+    setTimeout(() => setMsgSimulated(false), 3000);
+  };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-20">
+    <div className="max-w-4xl mx-auto space-y-8 pb-24">
       
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* 1. TOP NAV BAR */}
+      <div className="flex items-center justify-between">
         <button
-          onClick={onBackToHome}
-          className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white border border-zinc-200 text-xs font-bold text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 shadow-xs transition-all self-start"
+          onClick={onBackToOrders}
+          className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white hover:bg-zinc-100 border border-zinc-200 text-xs font-bold text-zinc-800 transition-colors shadow-2xs"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Return to Home</span>
+          <span>My Orders</span>
         </button>
 
         <div className="flex items-center gap-2">
-          {/* Live Presentation Demo Controls */}
-          <div className="bg-zinc-900 text-white p-1.5 rounded-2xl border border-zinc-800 flex items-center gap-1.5 shadow-sm text-xs font-mono">
-            <span className="text-[10px] text-zinc-400 font-bold px-2 uppercase">Demo Simulator:</span>
-            
-            <button
-              onClick={() => {
-                setCurrentStepIndex((prev) => (prev > 0 ? prev - 1 : 0));
-                setIsAutoSimulating(false);
-              }}
-              disabled={currentStepIndex === 0}
-              className="cursor-pointer px-2 py-1 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 rounded-lg text-[10px] font-bold"
-              title="Previous Step"
-            >
-              Prev
-            </button>
-
-            <button
-              onClick={() => {
-                setCurrentStepIndex((prev) => (prev < TIMELINE_STEPS.length - 1 ? prev + 1 : prev));
-                setIsAutoSimulating(false);
-              }}
-              disabled={currentStepIndex === TIMELINE_STEPS.length - 1}
-              className="cursor-pointer px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 rounded-lg text-[10px] font-bold flex items-center gap-1 text-zinc-950"
-            >
-              <span>Next Stage</span>
-              <FastForward className="w-3 h-3" />
-            </button>
-
-            <button
-              onClick={() => {
-                setCurrentStepIndex(0);
-                setIsAutoSimulating(true);
-              }}
-              className="cursor-pointer p-1 text-zinc-400 hover:text-white"
-              title="Reset Flow"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
+          <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-mono font-bold">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span>Order #{order.id}</span>
           </div>
+
+          <button
+            onClick={onBackToHome}
+            className="cursor-pointer text-xs font-bold text-zinc-600 hover:text-zinc-900 bg-white border border-zinc-200 px-3 py-1.5 rounded-2xl shadow-2xs"
+          >
+            Home
+          </button>
         </div>
       </div>
 
-      {/* Main Status & Map Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      {/* 2. REALISTIC INTERACTIVE MOCK MAP */}
+      <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden shadow-xl relative h-72 sm:h-96">
         
-        {/* LEFT 7 COLS: Live Visual Map & Delivery Partner Card */}
-        <div className="lg:col-span-7 space-y-6">
-          
-          {/* Mock Map Area */}
-          <div className="bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl space-y-4 p-5 relative">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
-                  <Navigation className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>FairByte Live Telemetry Route</span>
-                </h3>
-              </div>
-              <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">
-                GPS ACTIVE
-              </span>
-            </div>
+        {/* Stylized Dark Grid Map Texture */}
+        <div className="absolute inset-0 bg-[#121820] opacity-90">
+          <svg className="w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#10b981" strokeWidth="0.8" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
 
-            {/* Canvas Map */}
-            <div className="rounded-2xl overflow-hidden border border-zinc-800/80">
-              <canvas
-                id="tracking-map-canvas"
-                width={560}
-                height={230}
-                className="w-full bg-zinc-950 block"
-              />
-            </div>
+          {/* Simulated Roads */}
+          <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M 120,240 C 220,180 340,260 520,160 S 700,120 800,80"
+              fill="none"
+              stroke="#064e3b"
+              strokeWidth="10"
+              strokeLinecap="round"
+            />
+            <path
+              d="M 120,240 C 220,180 340,260 520,160 S 700,120 800,80"
+              fill="none"
+              stroke="#10b981"
+              strokeWidth="4"
+              strokeDasharray="8 6"
+              className="animate-pulse"
+            />
+          </svg>
+        </div>
 
-            <div className="flex items-center justify-between text-[11px] text-zinc-400 font-sans pt-1">
-              <div className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                <span>To: {order.address.label}</span>
-              </div>
-              <span className="font-mono text-emerald-400 font-bold">
-                {etaMinutes === 0 ? "Delivered 🎉" : `ETA: ~${etaMinutes} mins`}
-              </span>
+        {/* RESTAURANT PIN */}
+        <div className="absolute left-[15%] bottom-[35%] -translate-x-1/2 flex flex-col items-center">
+          <div className="bg-zinc-950 border border-emerald-500/50 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-md whitespace-nowrap mb-1">
+            🏪 {order.restaurantName}
+          </div>
+          <div className="w-8 h-8 rounded-full bg-emerald-600 border-2 border-white flex items-center justify-center text-white shadow-lg shadow-emerald-600/50">
+            <MapPin className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* CUSTOMER DESTINATION PIN */}
+        <div className="absolute right-[18%] top-[25%] -translate-x-1/2 flex flex-col items-center">
+          <div className="bg-zinc-950 border border-zinc-700 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-md whitespace-nowrap mb-1">
+            📍 {order.address.label}
+          </div>
+          <div className="w-8 h-8 rounded-full bg-red-500 border-2 border-white flex items-center justify-center text-white shadow-lg shadow-red-500/50">
+            <MapPin className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* MOVING RIDER PIN (Calculated position based on step) */}
+        <motion.div
+          animate={{
+            left: `${20 + currentStep * 13}%`,
+            top: `${60 - currentStep * 8}%`
+          }}
+          transition={{ duration: 1.2, ease: "easeInOut" }}
+          className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-20"
+        >
+          <div className="bg-emerald-500 text-zinc-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow-md whitespace-nowrap mb-1 flex items-center gap-1">
+            <Navigation className="w-3 h-3" />
+            <span>Alex ({order.deliveryPartner.vehicleNumber})</span>
+          </div>
+          <div className="relative">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500 border-2 border-white flex items-center justify-center text-zinc-950 shadow-xl shadow-emerald-500/50">
+              <Bike className="w-5 h-5 stroke-[2.5]" />
             </div>
+            <div className="absolute -inset-1 rounded-2xl bg-emerald-400 opacity-40 animate-ping pointer-events-none" />
+          </div>
+        </motion.div>
+
+        {/* Top Overlay Banner with Live ETA */}
+        <div className="absolute top-4 left-4 right-4 sm:right-auto bg-zinc-950/85 backdrop-blur-md border border-zinc-800 p-3 rounded-2xl flex items-center gap-3 text-white">
+          <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center font-black text-sm">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] text-zinc-400 uppercase font-bold block">Estimated Arrival</span>
+            <span className="font-black text-sm text-emerald-400">
+              {currentStep >= 5 ? "Delivered!" : `Arriving in ${Math.max(2, 14 - currentStep * 3)} mins`}
+            </span>
+          </div>
+        </div>
+
+        {/* Demo Step Progression Controller */}
+        <div className="absolute bottom-4 right-4 bg-zinc-950/90 backdrop-blur-md border border-zinc-800 p-2 rounded-2xl flex items-center gap-2 text-xs text-white">
+          <span className="text-[10px] text-zinc-400 font-mono pl-1">Demo Stage:</span>
+          <button
+            onClick={() => setCurrentStep(prev => (prev > 0 ? prev - 1 : 0))}
+            className="cursor-pointer px-2 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-bold"
+          >
+            ◀
+          </button>
+          <span className="font-mono text-emerald-400 font-bold px-1">{currentStep + 1}/6</span>
+          <button
+            onClick={() => setCurrentStep(prev => (prev < 5 ? prev + 1 : 5))}
+            className="cursor-pointer px-2 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-bold"
+          >
+            ▶
+          </button>
+        </div>
+
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+        
+        {/* Left: 6-Step Order Timeline */}
+        <div className="md:col-span-7 bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+            <h3 className="font-black text-base text-zinc-950 font-sans">
+              Delivery Progress
+            </h3>
+            <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+              {TIMELINE_STEPS[currentStep].title}
+            </span>
           </div>
 
-          {/* Delivery Partner Card */}
-          <div className="bg-white border border-zinc-200/80 rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
-                Delivery Partner
-              </span>
-              <div className="flex items-center gap-1 text-xs font-bold text-zinc-900 bg-zinc-100 px-2.5 py-1 rounded-xl">
-                <span>★ {order.deliveryPartner.rating}</span>
-              </div>
-            </div>
+          {/* Stepper Vertical Tree */}
+          <div className="space-y-6 relative pl-2">
+            {/* Connecting line */}
+            <div className="absolute left-6 top-3 bottom-4 w-0.5 bg-zinc-200" />
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <img
-                  src={order.deliveryPartner.photo}
-                  alt={order.deliveryPartner.name}
-                  className="w-14 h-14 rounded-2xl object-cover border border-zinc-200 shadow-sm"
-                />
-                <div>
-                  <h4 className="font-extrabold text-base text-zinc-950">
-                    {order.deliveryPartner.name}
-                  </h4>
-                  <p className="text-xs text-zinc-500 font-medium mt-0.5">
-                    {order.deliveryPartner.vehicle} ({order.deliveryPartner.vehicleNumber})
-                  </p>
-                  <p className="text-xs font-extrabold text-emerald-700 mt-1">
-                    {etaMinutes === 0 ? "Arrived at your location" : `Arriving in ${etaMinutes} min`}
-                  </p>
+            {TIMELINE_STEPS.map((step) => {
+              const isCompleted = currentStep > step.id;
+              const isCurrent = currentStep === step.id;
+              const isUpcoming = currentStep < step.id;
+
+              return (
+                <div key={step.id} className="relative flex items-start gap-4">
+                  {/* Step Marker Icon */}
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10 font-bold text-xs transition-all ${
+                    isCompleted
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : isCurrent
+                      ? "bg-emerald-100 text-emerald-900 border-2 border-emerald-600 animate-pulse"
+                      : "bg-zinc-100 text-zinc-400 border border-zinc-300"
+                  }`}>
+                    {isCompleted ? (
+                      <CheckCircle2 className="w-4 h-4 stroke-[3]" />
+                    ) : (
+                      <span>{step.id + 1}</span>
+                    )}
+                  </div>
+
+                  {/* Text Content */}
+                  <div className="space-y-0.5">
+                    <h4 className={`text-xs sm:text-sm font-extrabold ${
+                      isCurrent ? "text-emerald-700" : isCompleted ? "text-zinc-900" : "text-zinc-400"
+                    }`}>
+                      {step.title}
+                    </h4>
+                    <p className="text-[11px] text-zinc-500">{step.desc}</p>
+                  </div>
                 </div>
-              </div>
-
-              <a
-                href={`tel:${order.deliveryPartner.phone}`}
-                className="cursor-pointer bg-zinc-950 hover:bg-zinc-800 text-white px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-all self-stretch sm:self-auto shadow-md"
-              >
-                <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Call {order.deliveryPartner.name}</span>
-              </a>
-            </div>
+              );
+            })}
           </div>
 
         </div>
 
-        {/* RIGHT 5 COLS: Dynamic 6-Step Timeline & Bill Accordion */}
-        <div className="lg:col-span-5 space-y-6">
+        {/* Right: Delivery Partner Card & Transparent Order Details */}
+        <div className="md:col-span-5 space-y-6">
           
-          {/* Order Progress Timeline */}
-          <div className="bg-white border border-zinc-200/80 rounded-3xl p-6 shadow-sm space-y-6">
-            
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
-              <div>
-                <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">
-                  Order #{order.id}
-                </span>
-                <h3 className="font-extrabold text-base text-zinc-950 tracking-tight">
-                  {order.restaurantName}
-                </h3>
-              </div>
+          {/* DELIVERY PARTNER CARD */}
+          <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-sm space-y-5">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400 block border-b border-zinc-100 pb-2">
+              Delivery Partner
+            </span>
 
-              <div className="flex items-center gap-1.5 bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-bold">
-                <Clock className="w-3.5 h-3.5" />
-                <span>{order.estimatedDeliveryMin}</span>
-              </div>
-            </div>
-
-            {/* Step Indicators */}
-            <div className="space-y-4">
-              {TIMELINE_STEPS.map((step, idx) => {
-                const isPassed = currentStepIndex > idx;
-                const isCurrent = currentStepIndex === idx;
-                const isPending = currentStepIndex < idx;
-
-                return (
-                  <div key={step.status} className="flex gap-3 items-start relative">
-                    
-                    {/* Line between steps */}
-                    {idx < TIMELINE_STEPS.length - 1 && (
-                      <div
-                        className={`absolute left-3.5 top-8 bottom-0 w-0.5 -translate-x-1/2 ${
-                          isPassed ? "bg-emerald-500" : "bg-zinc-200"
-                        }`}
-                      />
-                    )}
-
-                    {/* Step Icon / Dot */}
-                    <div
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0 z-10 transition-all ${
-                        isPassed
-                          ? "bg-emerald-500 text-white shadow-xs"
-                          : isCurrent
-                          ? "bg-emerald-600 text-white ring-4 ring-emerald-100 scale-110 shadow-md"
-                          : "bg-zinc-100 text-zinc-400 border border-zinc-300"
-                      }`}
-                    >
-                      {isPassed ? "✓" : isCurrent ? "●" : "○"}
-                    </div>
-
-                    {/* Step Text */}
-                    <div className="min-w-0 flex-grow pt-0.5">
-                      <h4
-                        className={`text-xs font-bold ${
-                          isCurrent
-                            ? "text-emerald-800 font-extrabold text-sm"
-                            : isPassed
-                            ? "text-zinc-900"
-                            : "text-zinc-400"
-                        }`}
-                      >
-                        {step.label}
-                      </h4>
-                      <p className="text-[11px] text-zinc-500 font-normal mt-0.5 leading-snug">
-                        {step.description}
-                      </p>
-                    </div>
-
-                  </div>
-                );
-              })}
-            </div>
-
-          </div>
-
-          {/* Transparent Order Summary Accordion */}
-          <div className="bg-white border border-zinc-200/80 rounded-3xl p-5 shadow-xs space-y-3">
-            <button
-              onClick={() => setShowOrderSummary(!showOrderSummary)}
-              className="cursor-pointer w-full flex items-center justify-between text-xs font-bold text-zinc-900"
-            >
-              <div className="flex items-center gap-2">
-                <UtensilsCrossed className="w-4 h-4 text-emerald-600" />
-                <span>View Ordered Items ({order.items.length})</span>
-              </div>
-              {showOrderSummary ? (
-                <ChevronUp className="w-4 h-4 text-zinc-400" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-zinc-400" />
-              )}
-            </button>
-
-            {showOrderSummary && (
-              <div className="pt-3 border-t border-zinc-100 space-y-2 text-xs divide-y divide-zinc-50 animate-in fade-in duration-200">
-                {order.items.map(({ item, quantity }) => (
-                  <div key={item.id} className="pt-2 flex justify-between items-center text-zinc-700">
-                    <span className="truncate pr-2">
-                      {quantity}x {item.title}
-                    </span>
-                    <span className="font-mono font-bold text-zinc-900">
-                      ₹{item.price * quantity}
-                    </span>
-                  </div>
-                ))}
-
-                <div className="pt-3 space-y-1.5 text-zinc-500">
-                  <div className="flex justify-between items-center">
-                    <span>Food Subtotal</span>
-                    <span className="font-mono text-zinc-800">₹{order.billing.subtotal}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Delivery Fee</span>
-                    <span className="font-mono text-zinc-800">₹{order.billing.deliveryFee}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-emerald-700 font-bold">
-                    <span>Platform Fee</span>
-                    <span>₹0 (FREE)</span>
-                  </div>
-                  <div className="flex justify-between items-center text-zinc-950 font-black text-sm pt-2 border-t border-zinc-200">
-                    <span>Total Paid</span>
-                    <span className="text-emerald-700 font-sans">₹{order.billing.grandTotal}</span>
+            <div className="flex items-center gap-4">
+              <img
+                src={order.deliveryPartner.photo}
+                alt={order.deliveryPartner.name}
+                className="w-14 h-14 rounded-2xl object-cover border border-zinc-200 shadow-xs"
+              />
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-black text-sm text-zinc-950">
+                    {order.deliveryPartner.name}
+                  </h4>
+                  <div className="flex items-center gap-0.5 text-[10px] font-bold bg-amber-50 text-amber-900 px-1.5 py-0.5 rounded">
+                    <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
+                    <span>{order.deliveryPartner.rating}</span>
                   </div>
                 </div>
+                <p className="text-xs text-zinc-500">
+                  {order.deliveryPartner.vehicle}
+                </p>
+                <p className="text-[10px] font-mono text-zinc-400">
+                  {order.deliveryPartner.vehicleNumber}
+                </p>
               </div>
+            </div>
+
+            {/* Simulated Call / Message Actions */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <button
+                onClick={handleSimulateCall}
+                className="cursor-pointer bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-95"
+              >
+                <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{callSimulated ? "Connecting..." : "Call Partner"}</span>
+              </button>
+
+              <button
+                onClick={handleSimulateMsg}
+                className="cursor-pointer bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-95"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{msgSimulated ? "Opening..." : "Send Note"}</span>
+              </button>
+            </div>
+
+            {callSimulated && (
+              <p className="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded-xl text-center font-bold">
+                📞 Calling Alex (+91 98765 24109)...
+              </p>
             )}
+            {msgSimulated && (
+              <p className="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded-xl text-center font-bold">
+                💬 Delivery note: "Please leave package at the door."
+              </p>
+            )}
+          </div>
+
+          {/* Quick Receipt Summary */}
+          <div className="bg-zinc-50 rounded-3xl border border-zinc-200/80 p-5 space-y-3 text-xs">
+            <span className="font-extrabold text-zinc-900 block border-b border-zinc-200 pb-2">
+              Order Receipt
+            </span>
+            <div className="space-y-1.5 text-zinc-600">
+              <div className="flex justify-between">
+                <span>Restaurant:</span>
+                <span className="font-bold text-zinc-900">{order.restaurantName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Food Subtotal:</span>
+                <span className="font-mono">₹{order.billing.subtotal}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Delivery:</span>
+                <span className="font-mono">₹{order.billing.deliveryFee}</span>
+              </div>
+              <div className="flex justify-between text-emerald-700 font-bold">
+                <span>Platform Markups:</span>
+                <span className="font-mono">₹0 FREE</span>
+              </div>
+              <div className="border-t border-zinc-200 pt-2 flex justify-between font-black text-zinc-950 text-sm">
+                <span>Paid via {order.paymentMethod}:</span>
+                <span className="font-sans text-emerald-700">₹{order.billing.grandTotal}</span>
+              </div>
+            </div>
           </div>
 
         </div>
