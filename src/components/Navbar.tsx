@@ -116,10 +116,28 @@ export default function Navbar({
                   <line x1="14" y1="1" x2="14" y2="4" />
                 </svg>
               </div>
-              <div>
-                <span className="font-black text-2xl tracking-tight text-[#1c271b] font-sans">
-                  Resto<span className="text-[#365029]">X</span>
-                </span>
+              <div className="flex items-center gap-2.5">
+                <button 
+                  onClick={() => onNavigate("home")}
+                  className="cursor-pointer flex items-center gap-1.5 text-left group"
+                >
+                  <span className="font-black text-2xl tracking-tight text-[#1c271b] font-sans">
+                    Resto<span className="text-[#365029]">X</span>
+                  </span>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNavigate("orders");
+                  }}
+                  className={`cursor-pointer bg-[#e4ede0] hover:bg-[#d6e4d0] text-[#2b3e21] text-[11px] font-black uppercase px-3 py-1 rounded-full tracking-wider border border-[#cfddc7] inline-flex items-center gap-1.5 transition-all shadow-2xs active:scale-95 ${
+                    currentView === "orders" || currentView === "tracking" ? "bg-[#2d4023] text-white border-[#2d4023]" : ""
+                  }`}
+                  title="View Orders & Tracking"
+                >
+                  <Clock className="w-3.5 h-3.5 text-[#365029]" />
+                  <span>Orders</span>
+                </button>
               </div>
             </button>
           </div>
@@ -237,18 +255,6 @@ export default function Navbar({
               <Search className="w-4 h-4" />
             </button>
 
-            {/* Orders Button */}
-            <button
-              onClick={() => onNavigate("orders")}
-              className={`cursor-pointer flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-bold transition-all ${
-                currentView === "orders" || currentView === "tracking"
-                  ? "bg-[#2d4023] text-white shadow-md"
-                  : "bg-white hover:bg-[#f6f2e8] border border-[#e4dcce] text-[#334230]"
-              }`}
-            >
-              <Clock className="w-3.5 h-3.5 text-[#6c7967]" />
-              <span>Orders</span>
-            </button>
 
             {/* NOTIFICATIONS TRIGGER */}
             <button
