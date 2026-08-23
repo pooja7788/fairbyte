@@ -28,6 +28,7 @@ interface NavbarProps {
   onOpenAuth: () => void;
   onOpenNotifications: () => void;
   onOpenAddAddress: () => void;
+  onLogout: () => void;
   cartCount: number;
   cartTotal: number;
   addresses: Address[];
@@ -54,7 +55,8 @@ export default function Navbar({
   searchQuery,
   onSearchChange,
   user,
-  unreadNotificationsCount
+  unreadNotificationsCount,
+  onLogout
 }: NavbarProps) {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
@@ -301,36 +303,35 @@ export default function Navbar({
             </button>
 
             {/* USER PROFILE / AUTH PILL */}
-            <button
-              onClick={() => {
-                if (user.isLoggedIn) {
-                  onNavigate("profile");
-                } else {
-                  onOpenAuth();
-                }
-              }}
-              className="cursor-pointer flex items-center gap-2 pl-1 sm:pl-2 group"
-              title={user.isLoggedIn ? user.name : "Sign In"}
-            >
-              {user.isLoggedIn ? (
-                <div className="flex items-center gap-2 bg-white px-2 py-1.5 rounded-full border border-[#e4dcce] hover:bg-[#f6f2e8] transition-colors">
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-7 h-7 rounded-full object-cover border border-[#355029]"
-                  />
+            {user?.isLoggedIn ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onNavigate("profile")}
+                  className="cursor-pointer flex items-center gap-2 bg-white px-2 py-1.5 rounded-full border border-[#e4dcce] hover:bg-[#f6f2e8] transition-colors"
+                  title={user.name}
+                >
+                  <img src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full object-cover border border-[#355029]" />
                   <span className="hidden xl:block text-xs font-bold text-[#233120]">
                     {user.name.split(" ")[0]}
                   </span>
-                  <ChevronDown className="w-3 h-3 text-[#798573] hidden xl:block" />
-                </div>
-              ) : (
-                <div className="px-4 py-2 rounded-full bg-white text-[#2a3c23] hover:bg-[#f6f2e8] border border-[#e4dcce] text-xs font-bold flex items-center gap-1.5 shadow-2xs">
-                  <User className="w-3.5 h-3.5" />
-                  <span>Login</span>
-                </div>
-              )}
-            </button>
+                </button>
+                <button
+                  onClick={onLogout}
+                  className="cursor-pointer px-3 py-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold transition-colors"
+                  title="Logout"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onOpenAuth}
+                className="cursor-pointer px-4 py-2 rounded-full bg-white text-[#2a3c23] hover:bg-[#f6f2e8] border border-[#e4dcce] text-xs font-bold flex items-center gap-1.5 shadow-2xs"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Login</span>
+              </button>
+            )}
 
           </div>
 

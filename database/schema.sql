@@ -1,111 +1,63 @@
 -- =============================================================================
--- RestoX Database Schema
--- Tables: user_signups, user_emails, user_information, user_ids
--- Compatible with PostgreSQL / Supabase
+-- RestoX Database Schema  (Run this in Supabase SQL Editor)
+-- https://supabase.com/dashboard/project/mtffyaqvvuuuahctbpnl/sql
+--
+-- TABLE HIERARCHY (as per user requirement)
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 1. user_credentials  →  Login records (email + Supabase Auth user_id)
+--                          Password is NEVER stored here — handled by Supabase Auth
+-- 2. user_info         →  User profile details (name, email, phone, location)
+--
+-- Supabase Auth (auth.users) stores the hashed password automatically.
 -- =============================================================================
 
--- Enable the pgcrypto / uuid extension for non-sequential, cryptographically secure IDs
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- =============================================================================
--- Table 0: user_signups  ← PRIMARY SIGNUP DATA CAPTURE TABLE
--- Stores every "Create Account" form submission in clear, structured format.
--- Captured fields: Full Name, Email, Phone
--- NOT stored: Password, OTP, any authentication secret
+-- TABLE 1: user_credentials
+-- Stores login records: which email logged in, when, and the Supabase user ID.
+-- Linked to: Supabase auth.users via user_id
+-- Passwords are NEVER stored here — Supabase Auth handles bcrypt hashing.
 -- =============================================================================
-CREATE TABLE IF NOT EXISTS user_signups (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),   -- unique record ID
-    full_name       VARCHAR(255) NOT NULL,                        -- from "Full Name" field
-    email           VARCHAR(255),                                 -- if user typed email
-    phone           VARCHAR(30),                                  -- if user typed mobile number
-    raw_input       VARCHAR(255) NOT NULL,                        -- original "Email or Mobile" value (as typed)
-    accepted_terms  BOOLEAN DEFAULT TRUE NOT NULL,                -- checkbox: "I agree to Terms"
-    signed_up_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    otp_verified    BOOLEAN DEFAULT FALSE NOT NULL,               -- true after OTP confirmation
-    verified_at     TIMESTAMP WITH TIME ZONE                      -- when OTP was verified
+CREATE TABLE IF NOT EXISTS user_credentials (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         UUID NOT NULL UNIQUE,          -- FK to Supabase auth.users.id
+    email           VARCHAR(255) NOT NULL UNIQUE,  -- login email address
+    account_type    VARCHAR(30) DEFAULT 'email',   -- 'email' | 'google' | 'phone'
+    created_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    last_login_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
--- Indexes for user_signups
-CREATE UNIQUE INDEX IF NOT EXISTS idx_user_signups_email ON user_signups (email) WHERE email IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_user_signups_phone ON user_signups (phone) WHERE phone IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_user_signups_signed_up_at ON user_signups (signed_up_at DESC);
-
-
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_user_credentials_user_id   ON user_credentials (user_id);
+CREATE INDEX IF NOT EXISTS idx_user_credentials_email     ON user_credentials (email);
+CREATE INDEX IF NOT EXISTS idx_user_credentials_last_login ON user_credentials (last_login_at DESC);
 
 -- =============================================================================
--- Table 3: user_emails
--- Captures every unique email entered by users during login/signup
--- This is the primary email collection table.
+-- TABLE 2: user_info
+-- Stores user profile details: name, email, phone, location.
+-- Linked to user_credentials via user_id (same Supabase Auth user_id).
 -- =============================================================================
-CREATE TABLE IF NOT EXISTS user_emails (
-    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email          VARCHAR(255) NOT NULL UNIQUE,
-    first_seen_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    last_seen_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    login_count    INTEGER DEFAULT 1 NOT NULL,
-    source         VARCHAR(50) DEFAULT 'login' NOT NULL  -- 'login' | 'signup' | 'guest'
+CREATE TABLE IF NOT EXISTS user_info (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         UUID NOT NULL UNIQUE,          -- FK to Supabase auth.users.id
+    full_name       VARCHAR(255) NOT NULL,          -- entered during signup
+    email           VARCHAR(255) NOT NULL,          -- copy of login email for quick access
+    phone           VARCHAR(30),                   -- optional phone number
+    location        TEXT,                          -- delivery location / address text
+    lat             DECIMAL(10, 7),                -- GPS latitude
+    lng             DECIMAL(10, 7),                -- GPS longitude
+    avatar_url      TEXT,                          -- profile picture URL
+    created_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
--- Indexes for user_emails
-CREATE INDEX IF NOT EXISTS idx_user_emails_email ON user_emails (email);
-CREATE INDEX IF NOT EXISTS idx_user_emails_last_seen ON user_emails (last_seen_at DESC);
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_user_info_user_id ON user_info (user_id);
+CREATE INDEX IF NOT EXISTS idx_user_info_email   ON user_info (email);
 
--- =============================================================================
--- SQL: Upsert pattern for user_emails
--- Insert the email if new, or update last_seen_at and increment login_count if it already exists
--- =============================================================================
--- INSERT INTO user_emails (email, source)
--- VALUES ('pooja.reddy@example.com', 'login')
--- ON CONFLICT (email) DO UPDATE
---   SET last_seen_at = CURRENT_TIMESTAMP,
---       login_count  = user_emails.login_count + 1;
-
-
-
--- =============================================================================
--- Table 1: user_information
--- Stores core customer profile information without authentication secrets
--- =============================================================================
-CREATE TABLE IF NOT EXISTS user_information (
-    user_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name        VARCHAR(255) NOT NULL,
-    email       VARCHAR(255) NOT NULL UNIQUE,
-    phone       VARCHAR(20),
-    created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
-);
-
--- Indexes for user_information
-CREATE INDEX IF NOT EXISTS idx_user_information_email ON user_information (email);
-CREATE INDEX IF NOT EXISTS idx_user_information_created_at ON user_information (created_at DESC);
-
--- =============================================================================
--- Table 2: user_ids
--- Stores non-sequential, randomly generated external identifiers separately
--- =============================================================================
-CREATE TABLE IF NOT EXISTS user_ids (
-    id_record_id  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id       UUID NOT NULL,
-    external_id   VARCHAR(64) NOT NULL UNIQUE,
-    created_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-    -- Foreign Key establishing the relationship to user_information
-    CONSTRAINT fk_user_ids_user_information
-        FOREIGN KEY (user_id)
-        REFERENCES user_information(user_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
-
--- Indexes for user_ids
-CREATE INDEX IF NOT EXISTS idx_user_ids_user_id ON user_ids (user_id);
-CREATE INDEX IF NOT EXISTS idx_user_ids_external_id ON user_ids (external_id);
-
--- =============================================================================
--- Optional Trigger: Automatically update updated_at on user_information modification
--- =============================================================================
-CREATE OR REPLACE FUNCTION update_user_information_timestamp()
+-- Auto-update updated_at on changes
+CREATE OR REPLACE FUNCTION update_user_info_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = CURRENT_TIMESTAMP;
@@ -113,53 +65,83 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_user_information_updated_at ON user_information;
-CREATE TRIGGER trg_user_information_updated_at
-    BEFORE UPDATE ON user_information
+DROP TRIGGER IF EXISTS trg_user_info_updated_at ON user_info;
+CREATE TRIGGER trg_user_info_updated_at
+    BEFORE UPDATE ON user_info
     FOR EACH ROW
-    EXECUTE FUNCTION update_user_information_timestamp();
+    EXECUTE FUNCTION update_user_info_timestamp();
+
 
 -- =============================================================================
--- Example 1: Inserting a New User & Associated External ID (Atomic Transaction)
--- Generates a random non-sequential user_id and random external identifier
+-- (Existing tables kept for backward compatibility)
 -- =============================================================================
-WITH new_user AS (
-    INSERT INTO user_information (
-        user_id,
-        name,
-        email,
-        phone
-    ) VALUES (
-        gen_random_uuid(),
-        'Pooja Reddy',
-        'pooja.reddy@example.com',
-        '+91 98450 12345'
-    )
-    RETURNING user_id
-)
-INSERT INTO user_ids (
-    id_record_id,
-    user_id,
-    external_id
-)
-SELECT 
-    gen_random_uuid(),
-    user_id,
-    'usr_' || encode(gen_random_bytes(12), 'hex') -- Random 24-character hex ID (e.g., usr_a3f89b1c4e7208d4e5f67a91)
-FROM new_user
-RETURNING id_record_id, user_id, external_id;
+
+-- user_emails: tracks every email seen at login/signup
+CREATE TABLE IF NOT EXISTS user_emails (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email          VARCHAR(255) NOT NULL UNIQUE,
+    first_seen_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    last_seen_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    login_count    INTEGER DEFAULT 1 NOT NULL,
+    source         VARCHAR(50) DEFAULT 'login' NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_user_emails_email     ON user_emails (email);
+CREATE INDEX IF NOT EXISTS idx_user_emails_last_seen ON user_emails (last_seen_at DESC);
+
+-- user_signups: form capture before OTP verification
+CREATE TABLE IF NOT EXISTS user_signups (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    full_name       VARCHAR(255) NOT NULL,
+    email           VARCHAR(255),
+    phone           VARCHAR(30),
+    raw_input       VARCHAR(255) NOT NULL,
+    accepted_terms  BOOLEAN DEFAULT TRUE NOT NULL,
+    signed_up_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    otp_verified    BOOLEAN DEFAULT FALSE NOT NULL,
+    verified_at     TIMESTAMP WITH TIME ZONE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_signups_email ON user_signups (email) WHERE email IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_user_signups_phone        ON user_signups (phone) WHERE phone IS NOT NULL;
+
 
 -- =============================================================================
--- Example 2: Querying User Profile with Joined External ID
+-- HOW SIGNUP WORKS (code flow summary)
 -- =============================================================================
-SELECT 
-    ui.user_id,
-    ui.name,
-    ui.email,
-    ui.phone,
-    u_ids.external_id,
-    ui.created_at,
-    ui.updated_at
-FROM user_information ui
-INNER JOIN user_ids u_ids ON ui.user_id = u_ids.user_id
-WHERE ui.email = 'pooja.reddy@example.com';
+-- 1. User fills form: Full Name, Email, Password
+-- 2. signUpUser() calls supabase.auth.signUp({ email, password })
+--    → Supabase stores HASHED password in auth.users (never accessible)
+--    → Returns user_id (UUID)
+-- 3. We INSERT into user_credentials: { user_id, email, account_type, created_at }
+-- 4. We INSERT into user_info: { user_id, full_name, email, phone, ... }
+-- 5. Done — user is logged in
+
+-- =============================================================================
+-- HOW LOGIN WORKS
+-- =============================================================================
+-- 1. User enters Email + Password
+-- 2. signInUser() calls supabase.auth.signInWithPassword({ email, password })
+--    → Supabase verifies hash — NEVER exposes password
+-- 3. On success: UPDATE user_credentials SET last_login_at = NOW()
+-- 4. Fetch profile from user_info
+-- 5. Done — session token stored in browser
+
+-- =============================================================================
+-- HOW LOGOUT WORKS
+-- =============================================================================
+-- 1. signOutUser() calls supabase.auth.signOut()
+-- 2. Browser session cleared — user is logged out
+-- 3. App state reset to logged-out state
+
+-- =============================================================================
+-- EXAMPLE: Query a user's full profile
+-- =============================================================================
+-- SELECT
+--     uc.email,
+--     uc.last_login_at,
+--     ui.full_name,
+--     ui.phone,
+--     ui.location
+-- FROM user_credentials uc
+-- JOIN user_info ui ON uc.user_id = ui.user_id
+-- WHERE uc.email = 'pooja@example.com';

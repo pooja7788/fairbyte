@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { 
   Sparkles, 
@@ -59,15 +59,41 @@ import RestoXPromiseSection from "./components/RestoXPromiseSection";
 import AuthModal from "./components/AuthModal";
 import AddressModal from "./components/AddressModal";
 import NotificationsModal from "./components/NotificationsModal";
-import { saveOrderToSupabase, saveAddressToSupabase, checkSupabaseConnection } from "./lib/supabase";
+import { saveOrderToSupabase, saveAddressToSupabase, checkSupabaseConnection, signOutUser, getCurrentSession } from "./lib/supabase";
 
 export default function App() {
   // Navigation View State
   const [currentView, setCurrentView] = useState<AppView>("home");
   
-  // User & Auth State
-  const [user, setUser] = useState<UserProfile>(MOCK_USER);
+  // User & Auth State — starts LOGGED OUT (null)
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // Restore Supabase session on first load
+  useEffect(() => {
+    getCurrentSession().then((session) => {
+      if (session.loggedIn) {
+        setUser({
+          id:        session.userId!,
+          name:      session.fullName || session.email?.split("@")[0] || "User",
+          email:     session.email!,
+          phone:     session.phone || "",
+          avatar:    `https://ui-avatars.com/api/?name=${encodeURIComponent(session.fullName || session.email || "U")}&background=2d4023&color=fff&size=200`,
+          isLoggedIn: true
+        });
+      }
+    });
+  }, []);
+
+  // Logout handler
+  const handleLogout = async () => {
+    await signOutUser();
+    setUser(null);
+    setCart([]);
+    setActiveOrder(null);
+    setCurrentView("home");
+    showToast("You have been logged out.");
+  };
 
   // Address System (Bangalore locales)
   const [addresses, setAddresses] = useState<Address[]>(MOCK_ADDRESSES);
@@ -424,6 +450,7 @@ export default function App() {
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onOpenNotifications={() => setIsNotificationsOpen(true)}
         onOpenAddAddress={() => setIsAddressModalOpen(true)}
+        onLogout={handleLogout}
         cartCount={totalCartCount}
         cartTotal={totalCartAmount}
         addresses={addresses}
@@ -437,6 +464,7 @@ export default function App() {
         user={user}
         unreadNotificationsCount={unreadNotifCount}
       />
+
 
       {/* Main Container */}
       <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
