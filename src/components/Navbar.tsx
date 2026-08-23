@@ -15,9 +15,11 @@ import {
   Clock,
   Plus,
   ChefHat,
-  UtensilsCrossed
+  UtensilsCrossed,
+  AlertCircle
 } from "lucide-react";
 import { Address, AppView, UserProfile } from "../types";
+import { getCurrentDeviceLocation } from "../lib/location";
 
 interface NavbarProps {
   currentView: AppView;
@@ -33,8 +35,8 @@ interface NavbarProps {
   onSelectAddress: (addr: Address) => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
-  user: UserProfile;
-  unreadNotificationsCount: number;
+  user: UserProfile | null;
+  unreadNotificationsCount?: number;
 }
 
 export default function Navbar({
@@ -56,41 +58,31 @@ export default function Navbar({
 }: NavbarProps) {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [locationDetectError, setLocationDetectError] = useState<string | null>(null);
 
-  const handleDetectLocation = () => {
+  const handleDetectLocation = async () => {
     setIsDetectingLocation(true);
-    if (typeof navigator !== "undefined" && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setIsDetectingLocation(false);
-          const gpsAddr: Address = {
-            id: "addr-gps-" + Date.now(),
-            label: "Current Location (GPS)",
-            text: `Exact GPS (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}) • Bengaluru`,
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            isDefault: true
-          };
-          onSelectAddress(gpsAddr);
-          setShowLocationDropdown(false);
-        },
-        () => {
-          setIsDetectingLocation(false);
-          // Graceful fallback to central Bengaluru GPS coordinates
-          const fallbackAddr: Address = {
-            id: "addr-gps-" + Date.now(),
-            label: "Current Location (GPS)",
-            text: "Central Bengaluru (12.9716° N, 77.5946° E)",
-            lat: 12.9716,
-            lng: 77.5946,
-            isDefault: true
-          };
-          onSelectAddress(fallbackAddr);
-          setShowLocationDropdown(false);
-        },
-        { timeout: 4000 }
-      );
-    } else {
+    setLocationDetectError(null);
+
+    try {
+      const result = await getCurrentDeviceLocation();
+      if (result.success) {
+        const gpsAddr: Address = {
+          id: "addr-gps-" + Date.now(),
+          label: "📍 Current Location",
+          text: result.formattedAddress || `${result.area}, ${result.city}`,
+          lat: result.lat,
+          lng: result.lng,
+          isDefault: true
+        };
+        onSelectAddress(gpsAddr);
+        setShowLocationDropdown(false);
+      } else {
+        setLocationDetectError(result.error || "Location detection failed. Please choose an address below.");
+      }
+    } catch (err: any) {
+      setLocationDetectError("Unable to access GPS location. Please select an address manually.");
+    } finally {
       setIsDetectingLocation(false);
     }
   };
@@ -165,8 +157,15 @@ export default function Navbar({
                   className="cursor-pointer w-full bg-[#2d4023] hover:bg-[#203018] text-white text-xs font-black p-3 rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-[#2d4023]/25 transition-all"
                 >
                   <Compass className={`w-4 h-4 text-[#e2edd8] ${isDetectingLocation ? "animate-spin" : ""}`} />
-                  <span>{isDetectingLocation ? "Detecting GPS location..." : "📍 Use My Current Location"}</span>
+                  <span>{isDetectingLocation ? "Getting your location..." : "📍 Use Current Location"}</span>
                 </button>
+
+                {locationDetectError && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 p-2.5 rounded-xl text-[11px] flex items-start gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>{locationDetectError}</span>
+                  </div>
+                )}
 
                 <div className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#798573] border-b border-[#f0eae0] flex justify-between items-center">
                   <span>SAVED BANGALORE ADDRESSES</span>

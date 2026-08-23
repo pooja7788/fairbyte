@@ -19,9 +19,11 @@ import {
   RotateCcw,
   ExternalLink,
   Lock,
-  ArrowRight
+  ArrowRight,
+  Compass
 } from "lucide-react";
 import { Address, BillingBreakdown, CartItem } from "../types";
+import { getCurrentDeviceLocation } from "../lib/location";
 
 interface CheckoutViewProps {
   cartItems: CartItem[];
@@ -61,6 +63,33 @@ export default function CheckoutView({
   const [selectedUpiApp, setSelectedUpiApp] = useState<UpiApp>("gpay");
   const [upiIdInput, setUpiIdInput] = useState("pooja@okhdfcbank");
   const [upiError, setUpiError] = useState<string | null>(null);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [checkoutLocationError, setCheckoutLocationError] = useState<string | null>(null);
+
+  const handleQuickDetectLocation = async () => {
+    setIsDetectingLocation(true);
+    setCheckoutLocationError(null);
+    try {
+      const result = await getCurrentDeviceLocation();
+      if (result.success) {
+        const gpsAddr: Address = {
+          id: "addr-gps-" + Date.now(),
+          label: "📍 Current Location",
+          text: result.formattedAddress || `${result.area}, ${result.city}`,
+          lat: result.lat,
+          lng: result.lng,
+          isDefault: true
+        };
+        setSelectedAddress(gpsAddr);
+      } else {
+        setCheckoutLocationError(result.error || "Location detection failed.");
+      }
+    } catch (err: any) {
+      setCheckoutLocationError("Could not retrieve GPS location.");
+    } finally {
+      setIsDetectingLocation(false);
+    }
+  };
 
   // Card state
   const [cardNumber, setCardNumber] = useState("4532 •••• •••• 8821");
@@ -500,14 +529,33 @@ export default function CheckoutView({
                   </h3>
                 </div>
 
-                <button
-                  onClick={onOpenAddAddress}
-                  className="cursor-pointer text-[#2d4023] hover:text-[#203018] text-xs font-bold flex items-center gap-1 bg-[#edf4e8] px-3 py-1 rounded-xl border border-[#d2e2ca] transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add New</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleQuickDetectLocation}
+                    disabled={isDetectingLocation}
+                    className="cursor-pointer text-[#2d4023] hover:text-[#203018] text-xs font-bold flex items-center gap-1.5 bg-[#edf4e8] px-3 py-1.5 rounded-xl border border-[#d2e2ca] transition-colors shadow-2xs"
+                  >
+                    <Compass className={`w-3.5 h-3.5 ${isDetectingLocation ? "animate-spin" : ""}`} />
+                    <span>{isDetectingLocation ? "Getting location..." : "📍 Use Current Location"}</span>
+                  </button>
+
+                  <button
+                    onClick={onOpenAddAddress}
+                    className="cursor-pointer text-[#2d4023] hover:text-[#203018] text-xs font-bold flex items-center gap-1 bg-[#edf4e8] px-3 py-1.5 rounded-xl border border-[#d2e2ca] transition-colors shadow-2xs"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add New</span>
+                  </button>
+                </div>
               </div>
+
+              {checkoutLocationError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 p-2.5 rounded-xl text-xs flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{checkoutLocationError}</span>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 gap-3">
                 {addresses.map((addr) => (

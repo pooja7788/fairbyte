@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { X, MapPin, Building, Compass, Plus, Check } from "lucide-react";
+import { X, MapPin, Building, Compass, Plus, Check, AlertCircle, RefreshCw, CheckCircle2 } from "lucide-react";
 import { Address } from "../types";
+import { getCurrentDeviceLocation, DetectedLocationResult } from "../lib/location";
 
 interface AddressModalProps {
   isOpen: boolean;
@@ -20,32 +21,43 @@ export default function AddressModal({
   const [landmark, setLandmark] = useState("");
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number }>({ lat: 12.9716, lng: 77.5946 });
   const [isDetecting, setIsDetecting] = useState(false);
+  const [detectSuccess, setDetectSuccess] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleDetectGps = () => {
+  const handleDetectGps = async () => {
     setIsDetecting(true);
-    if (typeof navigator !== "undefined" && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setIsDetecting(false);
-          setGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-          setAreaLocale(`Live GPS: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)} (Bengaluru)`);
-        },
-        () => {
-          setIsDetecting(false);
-          setGpsCoords({ lat: 12.9716, lng: 77.5946 });
-          setAreaLocale("Central Bengaluru (12.9716, 77.5946)");
-        },
-        { timeout: 4000 }
-      );
-    } else {
+    setLocationError(null);
+    setDetectSuccess(false);
+
+    try {
+      const result: DetectedLocationResult = await getCurrentDeviceLocation();
+
+      if (result.success) {
+        setGpsCoords({ lat: result.lat, lng: result.lng });
+        setAreaLocale(result.formattedAddress || `${result.area}, ${result.city}`);
+        if (result.street && !flatBuilding) {
+          setFlatBuilding(result.street);
+        }
+        setDetectSuccess(true);
+      } else {
+        setLocationError(result.error || "Could not retrieve your location. Please enter it manually.");
+      }
+    } catch (err: any) {
+      setLocationError("Location detection encountered an error. Please enter your address manually.");
+    } finally {
       setIsDetecting(false);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!areaLocale.trim()) {
+      setLocationError("Please enter a valid delivery address.");
+      return;
+    }
+
     const finalLabel = label === "Other" && customLabel.trim() ? customLabel.trim() : label;
     const fullText = `${flatBuilding ? flatBuilding + ", " : ""}${areaLocale}${landmark ? " (Near " + landmark + ")" : ""}`;
 
@@ -62,37 +74,67 @@ export default function AddressModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-[2rem] max-w-md w-full p-6 sm:p-7 space-y-5 border border-[#eae4d8] shadow-2xl animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
+      <div className="bg-white rounded-[2rem] max-w-md w-full p-6 sm:p-7 space-y-5 border border-[#eae4d8] shadow-2xl animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#f0eae0] pb-3.5">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-[#2d4023] flex items-center justify-center text-white">
+            <div className="w-8 h-8 rounded-full bg-[#2d4023] flex items-center justify-center text-white shadow-sm">
               <MapPin className="w-4 h-4 text-[#e2edd8]" />
             </div>
             <h3 className="font-black text-[#1c271b] text-base font-sans">
-              Add Bengaluru Delivery Address
+              Add Delivery Address
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="cursor-pointer p-1.5 rounded-full text-zinc-400 hover:text-zinc-700"
+            className="cursor-pointer p-1.5 rounded-full text-[#798573] hover:text-[#1c271b]"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* GPS Quick Detect Button */}
-        <button
-          type="button"
-          onClick={handleDetectGps}
-          disabled={isDetecting}
-          className="cursor-pointer w-full bg-[#fbf9f4] hover:bg-[#edf4e8] text-[#2d4023] border border-[#ded5c5] font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 transition-all shadow-2xs"
-        >
-          <Compass className={`w-4 h-4 text-[#365029] ${isDetecting ? "animate-spin" : ""}`} />
-          <span>{isDetecting ? "Detecting GPS location..." : "📍 Auto-Detect Current GPS Location"}</span>
-        </button>
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={handleDetectGps}
+            disabled={isDetecting}
+            className={`cursor-pointer w-full font-black py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 transition-all shadow-2xs ${
+              detectSuccess
+                ? "bg-[#edf4e8] text-[#24371d] border border-[#d2e2ca]"
+                : "bg-[#2d4023] hover:bg-[#203018] text-white shadow-md shadow-[#2d4023]/25 active:scale-98"
+            }`}
+          >
+            {isDetecting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Getting your location...</span>
+              </>
+            ) : detectSuccess ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-[#2d4023]" />
+                <span>📍 Current Location Detected (Tap to re-detect)</span>
+              </>
+            ) : (
+              <>
+                <Compass className="w-4 h-4 text-[#e2edd8]" />
+                <span>📍 Use Current Location</span>
+              </>
+            )}
+          </button>
+
+          {locationError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-xs flex items-start gap-2 animate-in fade-in duration-150">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="font-bold">Location Detection Notice</p>
+                <p className="text-[11px] text-red-600 leading-relaxed">{locationError}</p>
+              </div>
+            </div>
+          )}
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           
@@ -105,7 +147,7 @@ export default function AddressModal({
                   type="button"
                   key={l}
                   onClick={() => setLabel(l as any)}
-                  className={`cursor-pointer px-4 py-2 rounded-full font-bold border transition-all ${
+                  className={`cursor-pointer px-4 py-2 rounded-xl font-bold border transition-all ${
                     label === l
                       ? "bg-[#2d4023] text-white border-[#2d4023] shadow-xs"
                       : "bg-[#faf7f2] text-[#334230] border-[#ded5c5] hover:bg-[#f6f2e8]"
@@ -121,7 +163,7 @@ export default function AddressModal({
                 value={customLabel}
                 onChange={(e) => setCustomLabel(e.target.value)}
                 placeholder="e.g. Studio, Gym, Friend's Place"
-                className="w-full mt-2 bg-[#faf7f2] border border-[#ded5c5] rounded-xl p-2.5 font-medium"
+                className="w-full mt-2 bg-[#faf7f2] border border-[#ded5c5] rounded-xl p-2.5 font-medium text-[#1c271b]"
               />
             )}
           </div>
@@ -134,21 +176,21 @@ export default function AddressModal({
               required
               value={flatBuilding}
               onChange={(e) => setFlatBuilding(e.target.value)}
-              placeholder="e.g. Flat 302, Green Glen Heights"
-              className="w-full bg-[#faf7f2] border border-[#ded5c5] rounded-xl p-2.5 font-medium focus:outline-none focus:ring-1 focus:ring-[#365029]"
+              placeholder="e.g. Flat 302, Green Glen Heights / House #12"
+              className="w-full bg-[#faf7f2] border border-[#ded5c5] rounded-xl p-2.5 font-medium text-[#1c271b] focus:outline-none focus:border-[#365029] focus:bg-white"
             />
           </div>
 
           {/* Area / Locality */}
           <div className="space-y-1">
-            <label className="font-bold text-[#495744] block">Area / Locality in Bengaluru</label>
-            <input
-              type="text"
+            <label className="font-bold text-[#495744] block">Street, Area &amp; City (Auto-detected or custom)</label>
+            <textarea
+              rows={2}
               required
               value={areaLocale}
               onChange={(e) => setAreaLocale(e.target.value)}
-              placeholder="e.g. 100 Feet Road, Indiranagar, Bengaluru"
-              className="w-full bg-[#faf7f2] border border-[#ded5c5] rounded-xl p-2.5 font-medium focus:outline-none focus:ring-1 focus:ring-[#365029]"
+              placeholder="e.g. 100 Feet Road, Indiranagar, Bengaluru, Karnataka 560038"
+              className="w-full bg-[#faf7f2] border border-[#ded5c5] rounded-xl p-2.5 font-medium text-[#1c271b] focus:outline-none focus:border-[#365029] focus:bg-white leading-relaxed"
             />
           </div>
 
@@ -160,8 +202,14 @@ export default function AddressModal({
               value={landmark}
               onChange={(e) => setLandmark(e.target.value)}
               placeholder="e.g. Near Metro Station / Behind Starbucks"
-              className="w-full bg-[#faf7f2] border border-[#ded5c5] rounded-xl p-2.5 font-medium focus:outline-none focus:ring-1 focus:ring-[#365029]"
+              className="w-full bg-[#faf7f2] border border-[#ded5c5] rounded-xl p-2.5 font-medium text-[#1c271b] focus:outline-none focus:border-[#365029] focus:bg-white"
             />
+          </div>
+
+          {/* GPS Coordinates Preview */}
+          <div className="bg-[#faf7f2] border border-[#eae4d8] rounded-xl p-2.5 flex items-center justify-between text-[11px] text-[#63705f] font-mono">
+            <span>GPS Pin Coordinates:</span>
+            <span className="font-bold text-[#2d4023]">{gpsCoords.lat.toFixed(4)}, {gpsCoords.lng.toFixed(4)}</span>
           </div>
 
           <button
