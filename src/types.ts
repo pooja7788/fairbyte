@@ -1,4 +1,4 @@
-﻿export interface FoodItem {
+export interface FoodItem {
   id: string;
   restaurantId: string;
   title: string;
@@ -117,8 +117,11 @@ export interface Order {
   createdAt: string;
   estimatedDeliveryMin: string;
   paymentMethod: string;
-  paymentStatus: "PAID" | "PENDING" | "AUTHORIZED" | "CAPTURED" | "VOIDED";
+  paymentStatus: "PAID" | "PENDING" | "AUTHORIZED" | "CAPTURED" | "VOIDED" | "FAILED" | "CANCELLED";
   paymentIntentId?: string;
+  transactionId?: string;
+  bankRefNumber?: string;
+  upiId?: string;
   customerPhone?: string;
   elapsedAcceptSeconds?: number;
   orderTimelineStep?: number;

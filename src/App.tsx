@@ -212,42 +212,50 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Place Order: Creates order in-app, triggers backend delivery dispatch, navigates to tracking
-  const handlePlaceOrder = (paymentMethod: string) => {
+  // Place Order: Creates order in-app with verified server payment details, triggers backend delivery dispatch, navigates to tracking
+  const handlePlaceOrder = (paymentDetails: {
+    paymentMethod: string;
+    paymentStatus: "PAID" | "PENDING";
+    transactionId?: string;
+    bankRefNumber?: string;
+    upiId?: string;
+  }) => {
     if (!billing || !selectedAddress || cart.length === 0) return;
 
     setIsProcessingCheckout(true);
 
-    setTimeout(() => {
-      const rest = selectedRestaurant || MOCK_RESTAURANTS[0];
-      const randomId = "RX-" + Math.floor(1000 + Math.random() * 9000);
+    const rest = selectedRestaurant || MOCK_RESTAURANTS[0];
+    const randomId = "RX-" + Math.floor(1000 + Math.random() * 9000);
 
-      const newOrder: Order = {
-        id: randomId,
-        restaurantId: rest.id,
-        restaurantName: rest.name,
-        restaurantImage: rest.image,
-        items: [...cart],
-        billing: billing,
-        status: "PLACED",
-        address: selectedAddress,
-        deliveryPartner: MOCK_DELIVERY_PARTNER,
-        createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        estimatedDeliveryMin: "25–30 min",
-        paymentMethod,
-        paymentStatus: "PAID",
-        orderTimelineStep: 0
-      };
+    const newOrder: Order = {
+      id: randomId,
+      restaurantId: rest.id,
+      restaurantName: rest.name,
+      restaurantImage: rest.image,
+      items: [...cart],
+      billing: billing,
+      status: "PLACED",
+      address: selectedAddress,
+      deliveryPartner: MOCK_DELIVERY_PARTNER,
+      createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      estimatedDeliveryMin: "25–30 min",
+      paymentMethod: paymentDetails.paymentMethod,
+      paymentStatus: paymentDetails.paymentStatus,
+      transactionId: paymentDetails.transactionId,
+      bankRefNumber: paymentDetails.bankRefNumber,
+      upiId: paymentDetails.upiId,
+      orderTimelineStep: 0
+    };
 
-      setActiveOrder(newOrder);
-      setPastOrders(prev => [newOrder, ...prev]);
-      saveOrderToSupabase(newOrder);
-      setIsProcessingCheckout(false);
-      setCart([]);
+    setActiveOrder(newOrder);
+    setPastOrders(prev => [newOrder, ...prev]);
+    saveOrderToSupabase(newOrder);
+    setIsProcessingCheckout(false);
+    setCart([]);
 
-      // Navigate customer to in-app tracking — NO Uber redirect
-      navigateTo("tracking");
-      showToast(`✅ Order ${randomId} confirmed! Assigning delivery partner...`);
+    // Navigate customer to in-app tracking
+    navigateTo("tracking");
+    showToast(`✅ Order ${randomId} confirmed! ${paymentDetails.paymentStatus === "PAID" ? "Payment verified" : "Payment on delivery"}`);
 
       // Trigger backend delivery simulation in background (Uber Direct / delivery network)
       fetch("/api/uber/dispatch", {
@@ -270,7 +278,6 @@ export default function App() {
           }
         })
         .catch(err => console.warn("[RestoX Dispatch] Backend dispatch call failed (simulation continues):", err));
-    }, 600);
   };
 
   // Reorder action
