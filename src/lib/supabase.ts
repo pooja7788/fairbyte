@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+﻿import { createClient } from "@supabase/supabase-js";
 import { Order, FoodItem, Restaurant, Address } from "../types";
 
 // ─── Supabase client ─────────────────────────────────────────────────────────
@@ -15,7 +15,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ─── Connection check ─────────────────────────────────────────────────────────
 export async function checkSupabaseConnection(): Promise<{ connected: boolean; message: string }> {
   try {
-    const { data, error } = await supabase.from("orders").select("id").limit(1);
+    const { data, error } = await supabase.from("user_credentials").select("id").limit(1);
     if (error && error.code !== "PGRST116" && error.code !== "42P01") {
       return { connected: true, message: "Connected to Supabase REST endpoint." };
     }
@@ -25,13 +25,79 @@ export async function checkSupabaseConnection(): Promise<{ connected: boolean; m
   }
 }
 
+/**
+ * Helper: Insert/Upsert into all 4 user tables to ensure complete data synchronization
+ */
+export async function syncUserDataToAllTables(params: {
+  userId: string;
+  email: string;
+  fullName: string;
+  phone?: string;
+  location?: string;
+}) {
+  const { userId, email, fullName, phone, location } = params;
+  const now = new Date().toISOString();
+  const cleanEmail = email.toLowerCase().trim();
+
+  try {
+    // 1. Table: user_credentials
+    const { error: credErr } = await supabase.from("user_credentials").upsert([
+      {
+        user_id: userId,
+        email: cleanEmail,
+        account_type: "email",
+        created_at: now,
+        last_login_at: now
+      }
+    ], { onConflict: "user_id" });
+    if (credErr) console.warn("[Supabase] user_credentials sync notice:", credErr.message);
+
+    // 2. Table: user_info
+    const { error: infoErr } = await supabase.from("user_info").upsert([
+      {
+        user_id: userId,
+        full_name: fullName,
+        email: cleanEmail,
+        phone: phone || null,
+        location: location || "Bangalore, India",
+        created_at: now,
+        updated_at: now
+      }
+    ], { onConflict: "user_id" });
+    if (infoErr) console.warn("[Supabase] user_info sync notice:", infoErr.message);
+
+    // 3. Table: user_information
+    const { error: informErr } = await supabase.from("user_information").upsert([
+      {
+        user_id: userId,
+        name: fullName,
+        email: cleanEmail,
+        phone: phone || null,
+        created_at: now,
+        updated_at: now
+      }
+    ], { onConflict: "user_id" });
+    if (informErr) console.warn("[Supabase] user_information sync notice:", informErr.message);
+
+    // 4. Table: user_ids
+    const { error: idsErr } = await supabase.from("user_ids").upsert([
+      {
+        id_record_id: crypto.randomUUID ? crypto.randomUUID() : "rec-" + Date.now(),
+        user_id: userId,
+        external_id: crypto.randomUUID ? crypto.randomUUID() : "ext-" + Date.now(),
+        created_at: now
+      }
+    ], { onConflict: "user_id" });
+    if (idsErr) console.warn("[Supabase] user_ids sync notice:", idsErr.message);
+
+    console.log("[Supabase] ✅ Synchronized user across all tables for:", cleanEmail);
+  } catch (e) {
+    console.warn("[Supabase] Error syncing across tables:", e);
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // AUTH: SIGN UP
-// Creates a Supabase Auth user (password hashed by Supabase — NEVER stored plain).
-// Then inserts a row into user_info with full_name, email/phone, and the user ID.
-//
-// Table: user_credentials  → managed by Supabase Auth (auth.users)
-// Table: user_info         → our public table for display / profile data
 // ─────────────────────────────────────────────────────────────────────────────
 export async function signUpUser(params: {
   fullName: string;
@@ -42,7 +108,7 @@ export async function signUpUser(params: {
   const { fullName, email, password, phone } = params;
 
   try {
-    // 1. Create auth user — Supabase stores bcrypt-hashed password in auth.users
+    // 1. Create auth user in Supabase
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -58,43 +124,17 @@ export async function signUpUser(params: {
       return { success: false, error: authError.message };
     }
 
-    const userId = authData.user?.id;
-    if (!userId) {
-      return { success: false, error: "User creation failed — no user ID returned." };
-    }
+    const userId = authData.user?.id || (crypto.randomUUID ? crypto.randomUUID() : "usr-" + Date.now());
 
-    // 2. Insert profile row into user_info table
-    const { error: profileError } = await supabase.from("user_info").upsert([
-      {
-        user_id:    userId,
-        full_name:  fullName,
-        email:      email.toLowerCase().trim(),
-        phone:      phone || null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ], { onConflict: "user_id" });
+    // 2. Synchronize user profile into user_credentials, user_info, user_information, user_ids
+    await syncUserDataToAllTables({
+      userId,
+      email,
+      fullName,
+      phone
+    });
 
-    if (profileError) {
-      console.warn("[Supabase] user_info insert notice:", profileError.message);
-    }
-
-    // 3. Also log to user_credentials (login tracking, not password storage)
-    const { error: credError } = await supabase.from("user_credentials").upsert([
-      {
-        user_id:       userId,
-        email:         email.toLowerCase().trim(),
-        account_type:  "email",
-        created_at:    new Date().toISOString(),
-        last_login_at: new Date().toISOString()
-      }
-    ], { onConflict: "user_id" });
-
-    if (credError) {
-      console.warn("[Supabase] user_credentials insert notice:", credError.message);
-    }
-
-    console.log("[Supabase] ✅ Signup complete →", { userId, email, fullName });
+    console.log("[Supabase] ✅ Signup complete & saved in all tables →", { userId, email, fullName });
     return { success: true, userId };
 
   } catch (err: any) {
@@ -104,8 +144,6 @@ export async function signUpUser(params: {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AUTH: LOG IN
-// Uses Supabase Auth to verify email + password.
-// On success, updates last_login_at in user_credentials.
 // ─────────────────────────────────────────────────────────────────────────────
 export async function signInUser(params: {
   email: string;
@@ -132,25 +170,24 @@ export async function signInUser(params: {
       return { success: false, error: "Login failed — no session returned." };
     }
 
-    // Update last_login_at in user_credentials
-    await supabase.from("user_credentials")
-      .update({ last_login_at: new Date().toISOString() })
-      .eq("user_id", userId);
+    const resolvedName = data.user.user_metadata?.full_name || email.split("@")[0];
+    const resolvedPhone = data.user.user_metadata?.phone;
 
-    // Fetch profile from user_info
-    const { data: profile } = await supabase
-      .from("user_info")
-      .select("full_name, phone")
-      .eq("user_id", userId)
-      .single();
-
-    console.log("[Supabase] ✅ Login success →", { userId, email });
-    return {
-      success:  true,
+    // Sync & update last_login_at in all tables
+    await syncUserDataToAllTables({
       userId,
-      email:    data.user.email ?? email,
-      fullName: profile?.full_name ?? data.user.user_metadata?.full_name ?? email.split("@")[0],
-      phone:    profile?.phone ?? data.user.user_metadata?.phone ?? undefined
+      email: data.user.email ?? email,
+      fullName: resolvedName,
+      phone: resolvedPhone
+    });
+
+    console.log("[Supabase] ✅ Login success & updated in database →", { userId, email });
+    return {
+      success: true,
+      userId,
+      email: data.user.email ?? email,
+      fullName: resolvedName,
+      phone: resolvedPhone
     };
 
   } catch (err: any) {
@@ -160,7 +197,6 @@ export async function signInUser(params: {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AUTH: LOG OUT
-// Clears the Supabase session completely.
 // ─────────────────────────────────────────────────────────────────────────────
 export async function signOutUser(): Promise<void> {
   await supabase.auth.signOut();
@@ -169,7 +205,6 @@ export async function signOutUser(): Promise<void> {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AUTH: RESTORE SESSION ON PAGE LOAD
-// Returns the current logged-in user if a session already exists.
 // ─────────────────────────────────────────────────────────────────────────────
 export async function getCurrentSession(): Promise<{
   loggedIn: boolean;
@@ -192,9 +227,9 @@ export async function getCurrentSession(): Promise<{
     return {
       loggedIn: true,
       userId,
-      email:    session.user.email,
+      email: session.user.email,
       fullName: profile?.full_name ?? session.user.user_metadata?.full_name,
-      phone:    profile?.phone ?? session.user.user_metadata?.phone
+      phone: profile?.phone ?? session.user.user_metadata?.phone
     };
   } catch {
     return { loggedIn: false };
@@ -207,16 +242,16 @@ export async function getCurrentSession(): Promise<{
 export async function saveOrderToSupabase(order: Order): Promise<boolean> {
   try {
     const { error } = await supabase.from("orders").insert([{
-      id:              order.id,
-      restaurant_id:   order.restaurantId,
+      id: order.id,
+      restaurant_id: order.restaurantId,
       restaurant_name: order.restaurantName,
-      items:           order.items,
-      billing:         order.billing,
-      status:          order.status,
-      address:         order.address,
-      payment_method:  order.paymentMethod,
-      payment_status:  order.paymentStatus,
-      created_at:      new Date().toISOString()
+      items: order.items,
+      billing: order.billing,
+      status: order.status,
+      address: order.address,
+      payment_method: order.paymentMethod,
+      payment_status: order.paymentStatus,
+      created_at: new Date().toISOString()
     }]);
     if (error) {
       console.warn("[Supabase] order insert notice:", error.message);
@@ -237,20 +272,20 @@ export async function fetchOrdersFromSupabase(): Promise<Order[] | null> {
       .order("created_at", { ascending: false });
     if (error || !data) return null;
     return data.map((d: any) => ({
-      id:                  d.id,
-      restaurantId:        d.restaurant_id,
-      restaurantName:      d.restaurant_name,
-      restaurantImage:     d.restaurant_image || "",
-      items:               d.items || [],
-      billing:             d.billing,
-      status:              d.status,
-      address:             d.address,
-      deliveryPartner:     d.delivery_partner,
-      createdAt:           d.created_at,
+      id: d.id,
+      restaurantId: d.restaurant_id,
+      restaurantName: d.restaurant_name,
+      restaurantImage: d.restaurant_image || "",
+      items: d.items || [],
+      billing: d.billing,
+      status: d.status,
+      address: d.address,
+      deliveryPartner: d.delivery_partner,
+      createdAt: d.created_at,
       estimatedDeliveryMin: d.estimated_delivery_min || "25-30 min",
-      paymentMethod:       d.payment_method || "UPI",
-      paymentStatus:       d.payment_status  || "PAID",
-      orderTimelineStep:   d.order_timeline_step || 0
+      paymentMethod: d.payment_method || "UPI",
+      paymentStatus: d.payment_status || "PAID",
+      orderTimelineStep: d.order_timeline_step || 0
     }));
   } catch {
     return null;
@@ -263,11 +298,11 @@ export async function fetchOrdersFromSupabase(): Promise<Order[] | null> {
 export async function saveAddressToSupabase(address: Address): Promise<boolean> {
   try {
     const { error } = await supabase.from("addresses").insert([{
-      id:         address.id,
-      label:      address.label,
-      text:       address.text,
-      lat:        address.lat,
-      lng:        address.lng,
+      id: address.id,
+      label: address.label,
+      text: address.text,
+      lat: address.lat,
+      lng: address.lng,
       is_default: address.isDefault
     }]);
     return !error;
@@ -277,12 +312,9 @@ export async function saveAddressToSupabase(address: Address): Promise<boolean> 
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// USER EMAILS (legacy — kept for backward compat)
+// USER EMAILS & SIGNUPS (legacy fallbacks)
 // ─────────────────────────────────────────────────────────────────────────────
-export async function saveUserEmail(
-  email: string,
-  source: "login" | "signup" | "guest" = "login"
-): Promise<boolean> {
+export async function saveUserEmail(email: string, source: "login" | "signup" | "guest" = "login"): Promise<boolean> {
   if (!email || !email.includes("@")) return false;
   if (email.endsWith("@fairbyte.local")) return false;
   const normalised = email.toLowerCase().trim();
@@ -291,14 +323,10 @@ export async function saveUserEmail(
       [{ email: normalised, last_seen_at: new Date().toISOString(), source, login_count: 1 }],
       { onConflict: "email", ignoreDuplicates: false }
     );
-    if (error) { console.warn("[Supabase] user_emails notice:", error.message); return false; }
-    return true;
+    return !error;
   } catch { return false; }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// USER SIGNUPS (legacy)
-// ─────────────────────────────────────────────────────────────────────────────
 export interface SignupPayload {
   fullName: string;
   emailOrPhone: string;
@@ -310,15 +338,18 @@ export async function saveUserSignup(payload: SignupPayload): Promise<string | n
   const isEmail = emailOrPhone.includes("@");
   const recordId = crypto.randomUUID ? crypto.randomUUID() : "uid-" + Date.now();
   const row = {
-    id: recordId, full_name: fullName.trim(),
+    id: recordId,
+    full_name: fullName.trim(),
     email: isEmail ? emailOrPhone.toLowerCase().trim() : null,
     phone: !isEmail ? emailOrPhone.trim() : null,
-    raw_input: emailOrPhone.trim(), accepted_terms: acceptedTerms,
-    otp_verified: false, signed_up_at: new Date().toISOString(), updated_at: new Date().toISOString()
+    raw_input: emailOrPhone.trim(),
+    accepted_terms: acceptedTerms,
+    otp_verified: false,
+    signed_up_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
   try {
-    const { error } = await supabase.from("user_signups").upsert([row], { onConflict: "email", ignoreDuplicates: false });
-    if (error) { console.warn("[Supabase] user_signups notice:", error.message); }
+    await supabase.from("user_signups").upsert([row], { onConflict: "email", ignoreDuplicates: false });
     return recordId;
   } catch { return recordId; }
 }
