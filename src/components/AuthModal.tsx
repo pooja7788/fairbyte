@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   X, 
@@ -15,6 +15,7 @@ import {
   KeyRound
 } from "lucide-react";
 import { UserProfile } from "../types";
+import { saveUserEmail } from "../lib/supabase";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -55,10 +56,13 @@ export default function AuthModal({
 
     setTimeout(() => {
       setIsLoading(false);
+      const resolvedEmail = emailOrPhone.includes("@") ? emailOrPhone : "poojabhusani20@gmail.com";
+      // Persist email to Supabase user_emails table (fire-and-forget)
+      saveUserEmail(resolvedEmail, "login");
       onLoginSuccess({
         id: "usr-" + Date.now(),
         name: emailOrPhone.includes("@") ? emailOrPhone.split("@")[0] : "Pooja Bhusani",
-        email: emailOrPhone.includes("@") ? emailOrPhone : "poojabhusani20@gmail.com",
+        email: resolvedEmail,
         phone: !emailOrPhone.includes("@") ? emailOrPhone : "+91 98765 43210",
         avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200",
         isLoggedIn: true
@@ -86,10 +90,13 @@ export default function AuthModal({
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
+      const resolvedEmail = emailOrPhone.includes("@") ? emailOrPhone : "poojabhusani20@gmail.com";
+      // Persist signup email to Supabase user_emails table (fire-and-forget)
+      saveUserEmail(resolvedEmail, "signup");
       onLoginSuccess({
         id: "usr-" + Date.now(),
         name: fullName.trim() || "Pooja Bhusani",
-        email: emailOrPhone.includes("@") ? emailOrPhone : "poojabhusani20@gmail.com",
+        email: resolvedEmail,
         phone: !emailOrPhone.includes("@") ? emailOrPhone : "+91 98765 43210",
         avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200",
         isLoggedIn: true

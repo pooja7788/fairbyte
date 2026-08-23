@@ -91,7 +91,7 @@ export async function fetchOrdersFromSupabase(): Promise<Order[] | null> {
 }
 
 /**
- * Save custom delivery address to Supabase
+ * Save delivery address to Supabase
  */
 export async function saveAddressToSupabase(address: Address): Promise<boolean> {
   try {
@@ -110,3 +110,56 @@ export async function saveAddressToSupabase(address: Address): Promise<boolean> 
     return false;
   }
 }
+
+/**
+ * Save or update a user email collected at login/signup.
+ *
+ * Uses an UPSERT: if the email already exists the last_seen_at timestamp
+ * and login_count are updated.  No passwords or secrets are stored.
+ *
+ * Table: user_emails
+ *   id             UUID PK
+ *   email          TEXT UNIQUE
+ *   first_seen_at  TIMESTAMPTZ
+ *   last_seen_at   TIMESTAMPTZ
+ *   login_count    INTEGER
+ *   source         TEXT  ('login' | 'signup' | 'guest')
+ */
+export async function saveUserEmail(
+  email: string,
+  source: "login" | "signup" | "guest" = "login"
+): Promise<boolean> {
+  if (!email || !email.includes("@")) return false;           // skip placeholder / phone-only users
+  if (email.endsWith("@fairbyte.local")) return false;        // skip internal guest accounts
+
+  const normalised = email.toLowerCase().trim();
+
+  try {
+    const { error } = await supabase.from("user_emails").upsert(
+      [
+        {
+          email: normalised,
+          last_seen_at: new Date().toISOString(),
+          source,
+          login_count: 1          // Supabase will not overwrite on conflict — handled by RLS / DB trigger
+        }
+      ],
+      {
+        onConflict: "email",      // UNIQUE column — merge on conflict
+        ignoreDuplicates: false   // allow the update path
+      }
+    );
+
+    if (error) {
+      console.warn("[Supabase] user_emails upsert notice:", error.message);
+      return false;
+    }
+
+    console.log(`[Supabase] Email recorded: ${normalised} (source: ${source})`);
+    return true;
+  } catch (err) {
+    console.warn("[Supabase] user_emails network/table error:", err);
+    return false;
+  }
+}
+

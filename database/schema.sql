@@ -1,11 +1,41 @@
 -- =============================================================================
 -- RestoX Database Schema
--- Two-Table Separation: User Information & Separate User IDs
+-- Tables: user_information, user_ids, user_emails
 -- Compatible with PostgreSQL / Supabase
 -- =============================================================================
 
 -- Enable the pgcrypto / uuid extension for non-sequential, cryptographically secure IDs
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- =============================================================================
+-- Table 3: user_emails
+-- Captures every unique email entered by users during login/signup
+-- This is the primary email collection table.
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS user_emails (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email          VARCHAR(255) NOT NULL UNIQUE,
+    first_seen_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    last_seen_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    login_count    INTEGER DEFAULT 1 NOT NULL,
+    source         VARCHAR(50) DEFAULT 'login' NOT NULL  -- 'login' | 'signup' | 'guest'
+);
+
+-- Indexes for user_emails
+CREATE INDEX IF NOT EXISTS idx_user_emails_email ON user_emails (email);
+CREATE INDEX IF NOT EXISTS idx_user_emails_last_seen ON user_emails (last_seen_at DESC);
+
+-- =============================================================================
+-- SQL: Upsert pattern for user_emails
+-- Insert the email if new, or update last_seen_at and increment login_count if it already exists
+-- =============================================================================
+-- INSERT INTO user_emails (email, source)
+-- VALUES ('pooja.reddy@example.com', 'login')
+-- ON CONFLICT (email) DO UPDATE
+--   SET last_seen_at = CURRENT_TIMESTAMP,
+--       login_count  = user_emails.login_count + 1;
+
+
 
 -- =============================================================================
 -- Table 1: user_information
