@@ -163,3 +163,97 @@ export async function saveUserEmail(
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// user_signups TABLE
+// Stores every "Create Account" form submission:
+//   full_name  — what the user typed in the Full Name field
+//   email      — if the Email or Mobile field contained "@"
+//   phone      — if the Email or Mobile field was a phone number
+//   raw_input  — the original unmodified value the user typed
+//   accepted_terms — true/false from the checkbox
+//   otp_verified   — updated to true after OTP confirmation
+// Passwords are NEVER stored.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface SignupPayload {
+  fullName: string;
+  emailOrPhone: string;   // raw value exactly as user typed it
+  acceptedTerms: boolean;
+}
+
+/**
+ * Step 1 of signup — save form data immediately when user clicks "Create Account"
+ * Returns the new record ID so it can be updated when OTP is verified.
+ */
+export async function saveUserSignup(payload: SignupPayload): Promise<string | null> {
+  const { fullName, emailOrPhone, acceptedTerms } = payload;
+
+  const isEmail = emailOrPhone.includes("@");
+  const recordId = crypto.randomUUID ? crypto.randomUUID() : "uid-" + Date.now();
+
+  const row = {
+    id:             recordId,
+    full_name:      fullName.trim(),
+    email:          isEmail ? emailOrPhone.toLowerCase().trim() : null,
+    phone:          !isEmail ? emailOrPhone.trim() : null,
+    raw_input:      emailOrPhone.trim(),
+    accepted_terms: acceptedTerms,
+    otp_verified:   false,
+    signed_up_at:   new Date().toISOString(),
+    updated_at:     new Date().toISOString()
+  };
+
+  try {
+    const { error } = await supabase.from("user_signups").upsert(
+      [row],
+      { onConflict: "email", ignoreDuplicates: false }
+    );
+
+    if (error) {
+      console.warn("[Supabase] user_signups insert notice:", error.message);
+      // Still return the local ID so the verification step can proceed
+      return recordId;
+    }
+
+    console.log("[Supabase] ✅ Signup saved →", {
+      id:        recordId,
+      full_name: row.full_name,
+      email:     row.email ?? "—",
+      phone:     row.phone ?? "—"
+    });
+    return recordId;
+  } catch (err) {
+    console.warn("[Supabase] user_signups network error:", err);
+    return recordId; // local fallback
+  }
+}
+
+/**
+ * Step 2 — mark the signup record as OTP-verified once the user confirms the OTP.
+ * Sets otp_verified = true and records verified_at timestamp.
+ */
+export async function markSignupVerified(signupId: string): Promise<boolean> {
+  if (!signupId) return false;
+
+  try {
+    const { error } = await supabase
+      .from("user_signups")
+      .update({
+        otp_verified: true,
+        verified_at:  new Date().toISOString(),
+        updated_at:   new Date().toISOString()
+      })
+      .eq("id", signupId);
+
+    if (error) {
+      console.warn("[Supabase] markSignupVerified error:", error.message);
+      return false;
+    }
+
+    console.log("[Supabase] ✅ OTP verified for signup:", signupId);
+    return true;
+  } catch (err) {
+    console.warn("[Supabase] markSignupVerified network error:", err);
+    return false;
+  }
+}

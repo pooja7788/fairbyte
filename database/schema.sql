@@ -1,11 +1,37 @@
 -- =============================================================================
 -- RestoX Database Schema
--- Tables: user_information, user_ids, user_emails
+-- Tables: user_signups, user_emails, user_information, user_ids
 -- Compatible with PostgreSQL / Supabase
 -- =============================================================================
 
 -- Enable the pgcrypto / uuid extension for non-sequential, cryptographically secure IDs
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- =============================================================================
+-- Table 0: user_signups  ← PRIMARY SIGNUP DATA CAPTURE TABLE
+-- Stores every "Create Account" form submission in clear, structured format.
+-- Captured fields: Full Name, Email, Phone
+-- NOT stored: Password, OTP, any authentication secret
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS user_signups (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),   -- unique record ID
+    full_name       VARCHAR(255) NOT NULL,                        -- from "Full Name" field
+    email           VARCHAR(255),                                 -- if user typed email
+    phone           VARCHAR(30),                                  -- if user typed mobile number
+    raw_input       VARCHAR(255) NOT NULL,                        -- original "Email or Mobile" value (as typed)
+    accepted_terms  BOOLEAN DEFAULT TRUE NOT NULL,                -- checkbox: "I agree to Terms"
+    signed_up_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    otp_verified    BOOLEAN DEFAULT FALSE NOT NULL,               -- true after OTP confirmation
+    verified_at     TIMESTAMP WITH TIME ZONE                      -- when OTP was verified
+);
+
+-- Indexes for user_signups
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_signups_email ON user_signups (email) WHERE email IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_user_signups_phone ON user_signups (phone) WHERE phone IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_user_signups_signed_up_at ON user_signups (signed_up_at DESC);
+
+
 
 -- =============================================================================
 -- Table 3: user_emails

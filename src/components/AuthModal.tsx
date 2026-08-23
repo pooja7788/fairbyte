@@ -15,7 +15,7 @@ import {
   KeyRound
 } from "lucide-react";
 import { UserProfile } from "../types";
-import { saveUserEmail } from "../lib/supabase";
+import { saveUserEmail, saveUserSignup, markSignupVerified } from "../lib/supabase";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -42,6 +42,8 @@ export default function AuthModal({
   const [otpValues, setOtpValues] = useState(["4", "2", "8", "9"]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  // Holds the Supabase record ID from the first signup step so OTP can mark it verified
+  const [signupRecordId, setSignupRecordId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -71,7 +73,7 @@ export default function AuthModal({
     }, 600);
   };
 
-  const handleSignupSubmit = (e: React.FormEvent) => {
+  const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim() || !emailOrPhone.trim()) {
       setError("Please fill all required fields");
@@ -82,16 +84,29 @@ export default function AuthModal({
       return;
     }
     setError("");
+
+    // ── LIVE DB PUSH: save signup form data to Supabase user_signups table ──
+    const recordId = await saveUserSignup({
+      fullName,
+      emailOrPhone,
+      acceptedTerms
+    });
+    setSignupRecordId(recordId);
+
     setAuthMode("otp");
   };
 
-  const handleOtpVerify = (e: React.FormEvent) => {
+  const handleOtpVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    // ── LIVE DB PUSH: mark signup as OTP-verified in Supabase ──
+    if (signupRecordId) {
+      await markSignupVerified(signupRecordId);
+    }
     setTimeout(() => {
       setIsLoading(false);
       const resolvedEmail = emailOrPhone.includes("@") ? emailOrPhone : "poojabhusani20@gmail.com";
-      // Persist signup email to Supabase user_emails table (fire-and-forget)
+      // Also persist to user_emails for tracking
       saveUserEmail(resolvedEmail, "signup");
       onLoginSuccess({
         id: "usr-" + Date.now(),
